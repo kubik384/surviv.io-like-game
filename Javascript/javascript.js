@@ -1,13 +1,11 @@
-function circle(x, y, radius, color, stroke = false, lineWidth = 1) {
-	this.x = x;
-	this.y = y;
+function circle(radius, color, stroke = false, lineWidth = 1) {
 	this.radius = radius;
 	this.color = color;
 	this.stroke = stroke;
-	this.draw = function(xOffset = 0, yOffset = 0) {
+	this.draw = function(x, y) {
 		var ctx = gameArea.context;
 		ctx.beginPath();
-		ctx.arc(this.x + xOffset, this.y + yOffset, this.radius, 0, 2 * Math.PI);
+		ctx.arc(x, y, this.radius, 0, 2 * Math.PI);
 		ctx.fillStyle = this.color;
 		ctx.fill();
 		if (stroke) {
@@ -18,38 +16,55 @@ function circle(x, y, radius, color, stroke = false, lineWidth = 1) {
 }
 //------------ Player constructor ------------//
 function player(x, y) {
-	this.body = new circle(x, y, 30, "rgb(244, 217, 66)");
-	this.leftHand = new circle(x - 24, y - 23, 10, "rgb(244, 217, 66)", true, 3);
-	this.rightHand = new circle(x + 24, y - 23, 10, "rgb(244, 217, 66)", true, 3);
+	this.x = x;
+	this.y = y;
+	this.body = new circle(30, "rgb(244, 217, 66)");
+	this.leftHand = new circle(10, "rgb(244, 217, 66)", true, 3);
+	this.rightHand = new circle(10, "rgb(244, 217, 66)", true, 3);
 	this.inventory = [];
 	this.weapon = new Weapon(x, y, 15, "Hand");
+	// Draws body and hands
 	this.update = function() {
-		this.body.draw();
-		this.leftHand.draw();
-		this.rightHand.draw();
+		this.body.draw(this.x, this.y);
+		this.leftHand.draw(this.x - 24, this.y - 23);
+		this.rightHand.draw(this.x + 24, this.y - 23);
 	}
+	// Picks weapon and drops his old if he had one
 	this.pickWeapon = function(weapon) {
-		if(this.weapon.name != "Hand") {
+		if(this.weapon.name == "Hand") {
 			this.weapon = weapon;
+			return null;
 		} else {
-			gameArea.items.push(this.player.weapon);
-			this.player.weapon = weapon;
+			var droppedWeapon = this.weapon;
+			droppedWeapon.x = this.x;
+			droppedWeapon.y = this.y;
+			this.weapon = weapon;
+			return droppedWeapon;
 		}
 	}
+	// Uses current weapon to attack
 	this.attack = function() {
 		this.weapon.attack();
+	}
+	// Changes the player's x, y coordinates
+	this.move = function (delta_x, delta_y) {
+		this.x += delta_x;
+		this.y += delta_y;
 	}
 }
 //------------ Item constructom + polyporphism --------------//
 function Item(x,y) {
-	this.circle = new circle(x, y, 20, "rgb(255, 255, 255)", true);
+	this.x = x;
+	this.y = y;
+	this.circle = new circle(20, "rgb(255, 255, 255)", true);
 	this.name = "Item";
-	this.update = function(xOffset, yOffset) {
-		this.circle.draw(xOffset, yOffset);
+	this.update = function() {
+		this.circle.draw(this.x, this.y);
 	}
-	this.inRange = function(x,y) {
+	// Checks if the passed x,y values are in range of the item (to be picked up)
+	this.inRange = function(x, y) {
 		var maxRange = 50;
-		return ((Math.abs(x - this.circle.x) < maxRange) && (Math.abs(y - this.circle.y) < maxRange));
+		return ((Math.abs(x - this.x) < maxRange) && (Math.abs(y - this.y) < maxRange));
 	}
 }
 
@@ -57,7 +72,7 @@ function Weapon(x, y, damage, name) {
 	this.name = name;
 	this.x = x;
 	this.y = y;
-	this.circle = new circle(x, y, 20, "rgb(255, 255, 255)", true);
+	this.circle = new circle(20, "rgb(255, 255, 255)", true);
 	this.damage = damage;
 }
 Weapon.prototype = new Item();
@@ -77,8 +92,9 @@ var gameArea = {
 		this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
 		this.playerSpeed = 5;
 		this.pickedItem = false;
-		this.items = [new Item(50, 100), new Item(50, 100), new Item(50, 100), new Item(50, 100), new Weapon(400, 300, 20, "AK-47")];
+		this.items = [new Item(50, 100), new Item(50, 100), new Item(50, 100), new Item(50, 100), new Weapon(400, 300, 20, "AK-47"), new Weapon(600, 600, 20, "UM9")];
 		
+		// --- Events listeners --- //
 		window.addEventListener('keydown', function(e) {
 			gameArea.pressed[e.code] = true;
 		})
@@ -92,24 +108,47 @@ var gameArea = {
 		})
 	},
 	clear : function() {
-		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+		this.context.clearRect(this.xOffset, this.yOffset, this.canvas.width, this.canvas.height);
 	},
 	//------------- Update --------------//
 	update : function() {
 		gameArea.clear();
-		
 		for(i = 0; i < gameArea.items.length; i++) {
-			gameArea.items[i].update(gameArea.xOffset, gameArea.yOffset);
+			gameArea.items[i].update();
 		}
+		// Character movement
+		var delta_x = 0;
+		var delta_y = 0;
+		if (gameArea.pressed['KeyA']) {
+			delta_x -= 1 * gameArea.playerSpeed;
+		}
+		if (gameArea.pressed['KeyW']) {
+			delta_y -= 1 * gameArea.playerSpeed;
+		}
+		if (gameArea.pressed['KeyD']) {
+			delta_x += 1 * gameArea.playerSpeed;
+		}
+		if (gameArea.pressed['KeyS']) {
+			delta_y += 0.5 * gameArea.playerSpeed;
+		}
+		gameArea.player.move(delta_x, delta_y);
+		gameArea.xOffset += delta_x;
+		gameArea.yOffset += delta_y;
+		gameArea.context.translate(-delta_x, -delta_y);
+		//--------------------------------------//
+		gameArea.player.update();
 		
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed	
-		var itemInRange = false;
+		var itemInRange = false; 
 		for(i = 0; i < gameArea.items.length; i++) {
-			if (gameArea.items[i].inRange(gameArea.player.body.x - gameArea.xOffset, gameArea.player.body.y - gameArea.yOffset)) {
+			if (gameArea.items[i].inRange(gameArea.player.x, gameArea.player.y)) {
 				if (gameArea.pressed['KeyF'] && !gameArea.pickedItem) {
 					// Puts the item into the player's weapon slot
 					if (gameArea.items[i] instanceof Weapon) {
-						gameArea.player.weapon = gameArea.items.splice(i,1)[0];
+						var droppedWeapon = gameArea.player.pickWeapon(gameArea.items.splice(i,1)[0]);
+						if (droppedWeapon != null) {
+							gameArea.items.push(droppedWeapon);
+						}
 						document.getElementById("ui-weapon").innerHTML = gameArea.player.weapon.name;
 					// Puts the item into the player's inventory
 					} else {
@@ -137,26 +176,6 @@ var gameArea = {
 		} else if (document.getElementById("ui-lower").style.display == "block") {
 			document.getElementById("ui-lower").style.display = "none";
 		}
-		
-		// Character movement
-		var delta_x = 0;
-		var delta_y = 0;
-		if (gameArea.pressed['KeyA']) {
-			delta_x += 1 * gameArea.playerSpeed;
-		}
-		if (gameArea.pressed['KeyW']) {
-			delta_y += 1 * gameArea.playerSpeed;
-		}
-		if (gameArea.pressed['KeyD']) {
-			delta_x -= 1 * gameArea.playerSpeed;
-		}
-		if (gameArea.pressed['KeyS']) {
-			delta_y -= 1 * gameArea.playerSpeed;
-		}
-		gameArea.xOffset += delta_x;
-		gameArea.yOffset += delta_y;
-		//--------------------------------------//
-		gameArea.player.update();
 	}
 }
 
