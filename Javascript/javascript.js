@@ -1,7 +1,7 @@
 function drawCircle(ctx, x, y, radius, color, stroke = false, lineWidth = 1) {
 		ctx.beginPath();
-		ctx.arc(x, y, this.radius, 0, 2 * Math.PI);
-		ctx.fillStyle = this.color;
+		ctx.arc(x, y, radius, 0, 2 * Math.PI);
+		ctx.fillStyle = color;
 		ctx.fill();
 		if (stroke) {
 			ctx.lineWidth = lineWidth;
@@ -15,7 +15,7 @@ function player(x, y) {
 	this.inventory = [];
 	this.weapon = new Weapon(x, y, 15, "Hand");
 	//Draws body and weapon
-	this.update = function() {
+	this.update = function(ctx) {
 		drawCircle(ctx, this.x, this.y, 30, "rgb(244, 217, 66)");
 		this.weapon.update(ctx);
 	}
@@ -36,6 +36,8 @@ function player(x, y) {
 	this.move = function (delta_x, delta_y) {
 		this.x += delta_x;
 		this.y += delta_y;
+		this.weapon.x += delta_x;
+		this.weapon.y += delta_y;
 	}
 }
 //------------ Item constructom + polyporphism --------------//
@@ -43,7 +45,7 @@ function Item(x,y) {
 	this.x = x;
 	this.y = y;
 	this.name = "Item";
-	this.update = function() {
+	this.update = function(ctx) {
 		drawCircle(ctx, this.x, this.y, 20, "rgb(255, 255, 255)", true);
 	}
 	// Checks if the passed x,y values are in range of the item (to be picked up)
@@ -102,7 +104,7 @@ var gameArea = {
 	update : function() {
 		gameArea.clear();
 		for(i = 0; i < gameArea.items.length; i++) {
-			gameArea.items[i].update();
+			gameArea.items[i].update(gameArea.context);
 		}
 		// Character movement
 		var delta_x = 0;
@@ -124,7 +126,7 @@ var gameArea = {
 		gameArea.yOffset += delta_y;
 		gameArea.context.translate(-delta_x, -delta_y);
 		//--------------------------------------//
-		gameArea.player.update();
+		gameArea.player.update(gameArea.context);
 		
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed	
 		var itemInRange = false; 
