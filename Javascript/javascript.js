@@ -12,39 +12,53 @@ function drawCircle(ctx, x, y, radius, color, stroke = false, lineWidth = 1) {
 function player(x, y) {
 	this.x = x;
 	this.y = y;
+	this.selectedWeapon = 0;
 	this.inventory = [];
-	this.weapon = new Weapon(x, y, 15, "Hand");
+	this.weapons = [new Weapon(x, y, 15, "Hand", true)];
+	this.ammo = [];
 	//Draws body and weapon
 	this.update = function(ctx) {
 		drawCircle(ctx, this.x, this.y, 30, "rgb(244, 217, 66)");
-		this.weapon.update(ctx);
+		this.weapons[this.selectedWeapon].update(ctx);
+	}
+	// Puts passed item into player's inventory
+	this.pickItem = function(item) {
+		this.inventory.push(item);
+		var itemDiv = document.createElement("div");
+		var itemName = document.createTextNode(item.getName());
+		itemDiv.appendChild(itemName);
+		document.getElementById("ui-inventory").appendChild(itemDiv);
 	}
 	// Picks weapon and drops his old if he had one
 	this.pickWeapon = function(weapon) {
-		if(this.weapon.name == "Hand") {
-			this.weapon = weapon;
-			return null;
-		} else {
-			var droppedWeapon = this.weapon;
-			droppedWeapon.x = this.x;
-			droppedWeapon.y = this.y;
-			this.weapon = weapon;
-			return droppedWeapon;
-		}
+		var droppedWeapon = this.weapons[this.selectedWeapon];
+		droppedWeapon.picked = false;
+		weapon.x = this.x;
+		weapon.y = this.y;
+		weapon.picked = true;
+		this.weapons[this.selectedWeapon] = weapon;
+		document.getElementById("ui-weapon").innerHTML = weapon.getName();
+		return droppedWeapon;
 	}
 	// Changes the player's x, y coordinates
-	this.move = function (delta_x, delta_y) {
+	this.move = function(delta_x, delta_y) {
 		this.x += delta_x;
 		this.y += delta_y;
-		this.weapon.x += delta_x;
-		this.weapon.y += delta_y;
+		this.weapons[this.selectedWeapon].x += delta_x;
+		this.weapons[this.selectedWeapon].y += delta_y;
+	}
+	this.getX = function() {
+		return this.x;
+	}
+	this.getY = function() {
+		return this.y
 	}
 }
-//------------ Item constructom + polyporphism --------------//
-function Item(x,y) {
+//------------ Item constructor + inheritance --------------//
+function Item(x, y, name="Item") {
 	this.x = x;
 	this.y = y;
-	this.name = "Item";
+	this.name = name;
 	this.update = function(ctx) {
 		drawCircle(ctx, this.x, this.y, 20, "rgb(255, 255, 255)", true);
 	}
@@ -53,15 +67,18 @@ function Item(x,y) {
 		var maxRange = 50;
 		return ((Math.abs(x - this.x) < maxRange) && (Math.abs(y - this.y) < maxRange));
 	}
+	// Returns the name of the item
+	this.getName = function () {
+		return this.name;
+	}
 }
 
-function Weapon(x, y, damage, name) {
-	this.name = name;
-	this.x = x;
-	this.y = y;
+function Weapon(x, y, damage, name, picked = false) {
+	Item.call(x,y,name);
 	this.damage = damage;
+	this.picked = picked;
 	this.update = function (ctx) {
-		drawCircle(ctx, this.x - 24, this.y - 23, 10, "rgb(244, 217, 66)", true, 3);
+		drawCircle(ctx, this.item.x - 24, this.item.y - 23, 10, "rgb(244, 217, 66)", true, 3);
 		drawCircle(ctx, this.x + 24, this.y - 23, 10, "rgb(244, 217, 66)", true, 3);
 	}
 }
@@ -131,30 +148,23 @@ var gameArea = {
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed	
 		var itemInRange = false; 
 		for(i = 0; i < gameArea.items.length; i++) {
-			if (gameArea.items[i].inRange(gameArea.player.x, gameArea.player.y)) {
+			if (gameArea.items[i].inRange(gameArea.player.getX(), gameArea.player.getY())) {
 				if (gameArea.pressed['KeyF'] && !gameArea.pickedItem) {
-					// Puts the item into the player's weapon slot
+					// Player picks the weapon
 					if (gameArea.items[i] instanceof Weapon) {
 						var droppedWeapon = gameArea.player.pickWeapon(gameArea.items.splice(i,1)[0]);
-						if (droppedWeapon != null) {
-							gameArea.items.push(droppedWeapon);
-						}
-						document.getElementById("ui-weapon").innerHTML = gameArea.player.weapon.name;
+						gameArea.items.push(droppedWeapon);
 					// Puts the item into the player's inventory
 					} else {
 						var pickedItem = gameArea.items.splice(i,1)[0];
-						gameArea.player.inventory.push(pickedItem);
-						var itemDiv = document.createElement("div");
-						var itemName = document.createTextNode(pickedItem.name);
-						itemDiv.appendChild(itemName);
-						document.getElementById("ui-inventory").appendChild(itemDiv);
+						gameArea.player.pickItem(pickedItem);
 					}
 					gameArea.pickedItem = true;
 				} else {
 					if (!gameArea.pressed['KeyF'] && gameArea.pickedItem) {
 						gameArea.pickedItem = false;
 					}
-					document.getElementById("pick-item").innerHTML = gameArea.items[i].name;
+					document.getElementById("pick-item").innerHTML = gameArea.items[i].getName();
 					document.getElementById("ui-lower").style.display = "block";
 					itemInRange = true;
 				}
