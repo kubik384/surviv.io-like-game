@@ -1,0 +1,59 @@
+* {
+	margin: 0;
+	padding: 0;
+}
+
+body {
+	background-color: rgb(128, 175, 73);
+}
+
+canvas {
+	display: block;
+}
+
+#ui-lower {
+	display: none;
+	color: white;
+	user-select: none;
+	position: absolute;
+	top: 60%;
+	left: 50%;
+	font-size: 30px;
+}
+
+#pick-key {
+	display: inline;
+	background: rgba(0, 0, 0, 0.4);
+	margin-right: -18px;
+	padding-left: 10px;
+	padding-right: 10px;
+	border-radius: 8px;
+}
+
+#pick-item {
+	display: inline;
+	margin-left: 30px;
+	background: rgba(0, 0, 0, 0.4);
+	padding-left: 10px;
+	padding-right: 10px;
+	border-radius: 8px;
+}
+
+#ui-inventory {
+	position: absolute;
+	left: 0;
+	top: 0;
+	color: white;
+	background: rgba(0, 0, 0, 0.4);
+	user-select: none;
+	font-size: 22px;
+}
+
+#ui-weapon {
+	position: absolute;
+	right: 10px;
+	top: 0;
+	color: white;
+	user-select: none;
+	font-size: 30px;
+}
