@@ -1,9 +1,4 @@
-function circle(radius, color, stroke = false, lineWidth = 1) {
-	this.radius = radius;
-	this.color = color;
-	this.stroke = stroke;
-	this.draw = function(x, y) {
-		var ctx = gameArea.context;
+function drawCircle(ctx, x, y, radius, color, stroke = false, lineWidth = 1) {
 		ctx.beginPath();
 		ctx.arc(x, y, this.radius, 0, 2 * Math.PI);
 		ctx.fillStyle = this.color;
@@ -11,23 +6,18 @@ function circle(radius, color, stroke = false, lineWidth = 1) {
 		if (stroke) {
 			ctx.lineWidth = lineWidth;
 			ctx.stroke();
-		}		
-	}
+		}
 }
 //------------ Player constructor ------------//
 function player(x, y) {
 	this.x = x;
 	this.y = y;
-	this.body = new circle(30, "rgb(244, 217, 66)");
-	this.leftHand = new circle(10, "rgb(244, 217, 66)", true, 3);
-	this.rightHand = new circle(10, "rgb(244, 217, 66)", true, 3);
 	this.inventory = [];
 	this.weapon = new Weapon(x, y, 15, "Hand");
-	// Draws body and hands
+	//Draws body and weapon
 	this.update = function() {
-		this.body.draw(this.x, this.y);
-		this.leftHand.draw(this.x - 24, this.y - 23);
-		this.rightHand.draw(this.x + 24, this.y - 23);
+		drawCircle(ctx, this.x, this.y, 30, "rgb(244, 217, 66)");
+		this.weapon.update(ctx);
 	}
 	// Picks weapon and drops his old if he had one
 	this.pickWeapon = function(weapon) {
@@ -42,10 +32,6 @@ function player(x, y) {
 			return droppedWeapon;
 		}
 	}
-	// Uses current weapon to attack
-	this.attack = function() {
-		this.weapon.attack();
-	}
 	// Changes the player's x, y coordinates
 	this.move = function (delta_x, delta_y) {
 		this.x += delta_x;
@@ -56,10 +42,9 @@ function player(x, y) {
 function Item(x,y) {
 	this.x = x;
 	this.y = y;
-	this.circle = new circle(20, "rgb(255, 255, 255)", true);
 	this.name = "Item";
 	this.update = function() {
-		this.circle.draw(this.x, this.y);
+		drawCircle(ctx, this.x, this.y, 20, "rgb(255, 255, 255)", true);
 	}
 	// Checks if the passed x,y values are in range of the item (to be picked up)
 	this.inRange = function(x, y) {
@@ -72,8 +57,11 @@ function Weapon(x, y, damage, name) {
 	this.name = name;
 	this.x = x;
 	this.y = y;
-	this.circle = new circle(20, "rgb(255, 255, 255)", true);
 	this.damage = damage;
+	this.update = function (ctx) {
+		drawCircle(ctx, this.x - 24, this.y - 23, 10, "rgb(244, 217, 66)", true, 3);
+		drawCircle(ctx, this.x + 24, this.y - 23, 10, "rgb(244, 217, 66)", true, 3);
+	}
 }
 Weapon.prototype = new Item();
 //---------------------- gameArea --------------------------//
@@ -181,32 +169,33 @@ var gameArea = {
 
 
 /*
-this.lPunch = false;
-this.rPunch = false;
-this.punchFrame = 0;
-if (this.rPunch) {
-	this.punchFrame += 1;
-	if (this.punchFrame < 9) {
-		this.rightHand.x -= 3;
-		this.rightHand.y -= 3;
-	} else if (this.punchFrame < 17) {
-		this.rightHand.x += 3;
-		this.rightHand.y += 3;
-	} else {
+this.update = function(ctx) {
+		this.lPunch = false;
 		this.rPunch = false;
 		this.punchFrame = 0;
-	}
-} else if (this.lPunch) {
-	this.punchFrame += 1;
-	if (this.punchFrame < 9) {
-		this.leftHand.x += 3;
-		this.leftHand.y -= 3;
-	} else if (this.punchFrame < 17) {
-		this.leftHand.x -= 3;
-		this.leftHand.y += 3;
-	} else {
-		this.lPunch = false;
-		this.punchFrame = 0;
-	}
-}
+		if (this.rPunch) {
+			this.punchFrame += 1;
+			if (this.punchFrame < 9) {
+				this.rightHand.x -= 3;
+				this.rightHand.y -= 3;
+			} else if (this.punchFrame < 17) {
+				this.rightHand.x += 3;
+				this.rightHand.y += 3;
+			} else {
+				this.rPunch = false;
+				this.punchFrame = 0;
+			}
+		} else if (this.lPunch) {
+			this.punchFrame += 1;
+			if (this.punchFrame < 9) {
+				this.leftHand.x += 3;
+				this.leftHand.y -= 3;
+			} else if (this.punchFrame < 17) {
+				this.leftHand.x -= 3;
+				this.leftHand.y += 3;
+			} else {
+				this.lPunch = false;
+				this.punchFrame = 0;
+			}
+		}
 */
