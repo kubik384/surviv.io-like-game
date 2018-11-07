@@ -10,3 +10,4 @@ https://medium.com/javascript-scene/master-the-javascript-interview-what-s-the-d
 https://stackoverflow.com/questions/19633762/classical-inheritance-vs-prototypal-inheritance-in-javascript
 https://www.reddit.com/r/javascript/comments/828mxu/please_explain_classic_inheritance_vs_prototype/
 https://tinybuddha.com/blog/5-questions-when-you-arent-sure-what-you-want-in-life/
+http://www.comicsbeat.com/review-its-me-becca-tobin-and-realization-about-oneself/
