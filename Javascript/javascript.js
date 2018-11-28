@@ -1,5 +1,18 @@
 "use strict";
 
+// --- Events listeners --- //
+window.addEventListener('keydown', function(e) {
+	game_area.pressed[e.code] = true;
+})
+window.addEventListener('keyup', function(e) {
+	game_area.pressed[e.code] = false;
+})
+window.addEventListener('mousedown', function(e) {
+	if (e.button == 0) {
+		game_area.player.attack();
+	}
+})
+
 function drawCircle(ctx, x, y, radius, color, stroke = false, lineWidth = 1) {
 		ctx.beginPath();
 		ctx.arc(x, y, radius, 0, 2 * Math.PI);
@@ -97,26 +110,13 @@ function gameArea() {
 	this.xOffset = 0;
 	this.yOffset = 0;
 	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-	this.interval = setInterval(this.update, 20);
+	this.interval = setInterval(this.update.bind(this), 20);
 	this.context = this.canvas.getContext("2d");
 	this.player = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
 	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
 	this.playerSpeed = 5;
 	this.pickedItem = false;
 	this.items = [];//new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new weapon(400, 300, 20, "AK-47"), new weapon(600, 600, 20, "UM9")
-		
-	// --- Events listeners --- //
-	window.addEventListener('keydown', function(e) {
-		this.pressed[e.code] = true;
-	})
-	window.addEventListener('keyup', function(e) {
-		this.pressed[e.code] = false;
-	})
-	window.addEventListener('mousedown', function(e) {
-		if (e.button == 0) {
-			this.player.attack();
-		}
-	})
 }
 
 gameArea.prototype.clear = function() {
