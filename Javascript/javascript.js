@@ -13,13 +13,26 @@ window.addEventListener('mousedown', function(e) {
 	}
 })
 
-function drawCircle(ctx, x, y, radius, color, stroke = false, lineWidth = 1) {
+function drawCircle(ctx, x, y, radius, fillColor, stroke = false, strokeColor = "black", lineWidth = 1) {
 	ctx.beginPath();
 	ctx.arc(x, y, radius, 0, 2 * Math.PI);
-	ctx.fillStyle = color;
+	ctx.lineWidth = lineWidth;
+	ctx.fillStyle = fillColor;
 	ctx.fill();
 	if (stroke) {
-		ctx.lineWidth = lineWidth;
+		ctx.strokeStyle = strokeColor;
+		ctx.stroke();
+	}
+}
+
+function drawRect(ctx, x, y, width, height, fillColor, stroke = false, strokeColor = "black", lineWidth = 1) {
+	ctx.beginPath();
+	ctx.lineWidth = lineWidth;
+	ctx.fillStyle = fillColor;
+	ctx.rect(x, y, width, height); 
+	ctx.fill();
+	if (stroke) {
+		ctx.strokeStyle = strokeColor;
 		ctx.stroke();
 	}
 }
@@ -30,7 +43,7 @@ function player(x, y) {
 	this.y = y;
 	this.selectedWeapon = 0;
 	this.inventory = [];
-	this.weapons = [new weapon(x, y, 15, "Hand", true)];
+	this.weapons = [new weapon(x, y, 15, "Hands", true)];
 	this.ammo = [];
 }
 
@@ -96,12 +109,31 @@ function weapon(x, y, damage, name, picked = false) {
 	item.call(this,x,y,name);
 	this.damage = damage;
 	this.picked = picked;
+	//For rectangles which create the shape of a weapon
+	this.wShape = [];
+	
+	if (name == "Hands") {
+		//l/r hand offset
+		this.lHO = {x : -24, y : -23};
+		this.rHO = {x : 24, y : -23};
+	} else if (name == "AK-47") {
+		this.lHO = {x : -10, y : -50};
+		this.rHO = {x : 0, y : -15};
+		this.wShape.push({x : -8, y : -20, width : 16, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
+	} else if (name == "UM9") {
+		this.lHO = {x : -10, y : -50};
+		this.rHO = {x : 0, y : -15};
+		this.wShape.push({x : -6, y : -20, width : 12, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
+	}
 }
 
 weapon.prototype = Object.create(item.prototype);
 weapon.prototype.update = function (ctx) {
-	drawCircle(ctx, this.x - 24, this.y - 23, 10, "rgb(244, 217, 66)", true, 3);
-	drawCircle(ctx, this.x + 24, this.y - 23, 10, "rgb(244, 217, 66)", true, 3);
+	for (var i = 0; i < this.wShape.length; i++) {
+		drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
+	}
+	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
+	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
 }
 //---------------------- gameArea --------------------------//
 function gameArea() {
@@ -116,7 +148,7 @@ function gameArea() {
 	this.context = this.canvas.getContext("2d");
 	this.player = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
 	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
-	this.playerSpeed = 5;
+	this.playerSpeed = 15;
 	this.pickedItem = false;
 	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new weapon(400, 300, 20, "AK-47"), new weapon(600, 600, 20, "UM9")];
 }
