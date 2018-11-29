@@ -14,15 +14,16 @@ window.addEventListener('mousedown', function(e) {
 })
 
 function drawCircle(ctx, x, y, radius, color, stroke = false, lineWidth = 1) {
-		ctx.beginPath();
-		ctx.arc(x, y, radius, 0, 2 * Math.PI);
-		ctx.fillStyle = color;
-		ctx.fill();
-		if (stroke) {
-			ctx.lineWidth = lineWidth;
-			ctx.stroke();
-		}
+	ctx.beginPath();
+	ctx.arc(x, y, radius, 0, 2 * Math.PI);
+	ctx.fillStyle = color;
+	ctx.fill();
+	if (stroke) {
+		ctx.lineWidth = lineWidth;
+		ctx.stroke();
+	}
 }
+
 //------------ Player constructor ------------//
 function player(x, y) {
 	this.x = x;
@@ -110,13 +111,14 @@ function gameArea() {
 	this.xOffset = 0;
 	this.yOffset = 0;
 	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+	//Took me years to get the following line of code working - https://stackoverflow.com/questions/7890685/referencing-this-inside-setinterval-settimeout-within-object-prototype-methods
 	this.interval = setInterval(this.update.bind(this), 20);
 	this.context = this.canvas.getContext("2d");
 	this.player = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
 	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
 	this.playerSpeed = 5;
 	this.pickedItem = false;
-	this.items = [];//new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new weapon(400, 300, 20, "AK-47"), new weapon(600, 600, 20, "UM9")
+	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new weapon(400, 300, 20, "AK-47"), new weapon(600, 600, 20, "UM9")];
 }
 
 gameArea.prototype.clear = function() {
@@ -166,8 +168,8 @@ gameArea.prototype.update = function() {
 				}
 				this.pickedItem = true;
 			} else {
-				if (!this.pressed['KeyF'] && this.pickeditem) {
-					this.pickeditem = false;
+				if (!this.pressed['KeyF'] && this.pickedItem) {
+					this.pickedItem = false;
 				}
 				document.getElementById("pick-item").innerHTML = this.items[i].getName();
 				document.getElementById("ui-lower").style.display = "block";
