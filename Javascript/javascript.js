@@ -1,16 +1,37 @@
 "use strict";
 
+var game_area;
+var selectedCanvas;
+
+function startGame() {
+	game_area = new gameArea();
+	selectedCanvas = game_area;
+}
+
 // --- Events listeners --- //
 window.addEventListener('keydown', function(e) {
-	game_area.pressed[e.code] = true;
+	selectedCanvas.pressed[e.code] = true;
 })
 window.addEventListener('keyup', function(e) {
-	game_area.pressed[e.code] = false;
+	selectedCanvas.pressed[e.code] = false;
 })
 window.addEventListener('mousedown', function(e) {
 	if (e.button == 0) {
-		game_area.player.attack();
+		selectedCanvas.player.attack();
 	}
+})
+window.addEventListener('mousemove', function(e) {
+	//(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
+	//calculate slope of the line and apply atan2 to calculate angle in radians
+	
+	/*
+	console.log("sin: " + Math.sin(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
+	console.log("cos:" + Math.cos(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
+	console.log("tan::" + Math.tan(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
+	console.log("cot:" + 1 / Math.tan(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
+	*/
+	
+	selectedCanvas.player.weapons[selectedCanvas.player.selectedWeapon].changeAngle(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
 })
 
 function drawCircle(ctx, x, y, radius, fillColor, stroke = false, strokeColor = "black", lineWidth = 1) {
@@ -78,11 +99,8 @@ player.prototype.move = function(delta_x, delta_y) {
 	this.weapons[this.selectedWeapon].x += delta_x;
 	this.weapons[this.selectedWeapon].y += delta_y;
 }
-player.prototype.getX = function() {
-	return this.x;
-}
-player.prototype.getY = function() {
-	return this.y
+player.prototype.getCoords = function() {
+	return {x : this.x, y : this.y};
 }
 
 //------------ item constructor + inheritance --------------//
@@ -96,9 +114,9 @@ item.prototype.update = function(ctx) {
 	drawCircle(ctx, this.x, this.y, 20, "rgb(255, 255, 255)", true);
 }
 // Checks if the passed x,y values are in range of the item (to be picked up)
-item.prototype.inRange = function(x, y) {
+item.prototype.inRange = function(coords) {
 	var maxRange = 50;
-	return ((Math.abs(x - this.x) < maxRange) && (Math.abs(y - this.y) < maxRange));
+	return ((Math.abs(coords.x - this.x) < maxRange) && (Math.abs(coords.y - this.y) < maxRange));
 }
 // Returns the name of the item
 item.prototype.getName = function () {
@@ -111,6 +129,7 @@ function weapon(x, y, damage, name, picked = false) {
 	this.picked = picked;
 	//For rectangles which create the shape of a weapon
 	this.wShape = [];
+	this.angle = 0;
 	
 	if (name == "Hands") {
 		//l/r hand offset
@@ -119,11 +138,12 @@ function weapon(x, y, damage, name, picked = false) {
 	} else if (name == "AK-47") {
 		this.lHO = {x : -10, y : -50};
 		this.rHO = {x : 0, y : -15};
-		this.wShape.push({x : -8, y : -20, width : 16, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
+		this.wShape.push({x : -6, y : -20, width : 12, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
 	} else if (name == "UM9") {
 		this.lHO = {x : -10, y : -50};
 		this.rHO = {x : 0, y : -15};
-		this.wShape.push({x : -6, y : -20, width : 12, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
+		this.wShape.push({x : -8, y : -20, width : 16, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
+		
 	}
 }
 
@@ -134,6 +154,21 @@ weapon.prototype.update = function (ctx) {
 	}
 	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
 	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
+}
+weapon.prototype.changeAngle = function (angle) {
+	var radAngle = (this.angle - angle) * (Math.PI / 180);
+	var lX = this.lHO.x * Math.cos(radAngle) - this.lHO.y * Math.sin(radAngle);
+	var lY = this.lHO.y * Math.cos(radAngle) + this.lHO.x * Math.sin(radAngle);
+	var rX = this.rHO.x * Math.cos(radAngle) - this.rHO.y * Math.sin(radAngle);
+	var rY = this.rHO.y * Math.cos(radAngle) + this.rHO.x * Math.sin(radAngle);
+	this.lHO.x = lX;
+	this.lHO.y = lY;
+	this.rHO.x = rX;
+	this.rHO.y = rY;
+	this.angle = angle;
+	while(this.angle > 360) {
+		this.angle -= 360;
+	}
 }
 //---------------------- gameArea --------------------------//
 function gameArea() {
@@ -187,7 +222,7 @@ gameArea.prototype.update = function() {
 	// Shows pickup ui if near any item and pick it up if 'F' is pressed	
 	var itemInRange = false; 
 	for(i = 0; i < this.items.length; i++) {
-		if (this.items[i].inRange(this.player.getX(), this.player.getY())) {
+		if (this.items[i].inRange(this.player.getCoords())) {
 			if (this.pressed['KeyF'] && !this.pickedItem) {
 				// Player picks the weapon
 				if (this.items[i] instanceof weapon) {
