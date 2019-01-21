@@ -46,7 +46,12 @@ function drawCircle(ctx, x, y, radius, fillColor, stroke = false, strokeColor = 
 	}
 }
 
-function drawRect(ctx, x, y, width, height, fillColor, stroke = false, strokeColor = "black", lineWidth = 1) {
+function drawRect(ctx, x, y, width, height, fillColor, angle = 0, origin = {x : 0, y : 0}, stroke = false, strokeColor = "black", lineWidth = 1) {
+	if (angle != 0) {
+		ctx.save();
+		ctx.translate(origin.x, origin.y);
+		ctx.rotate(angle * Math.PI / 180);
+	}
 	ctx.beginPath();
 	ctx.lineWidth = lineWidth;
 	ctx.fillStyle = fillColor;
@@ -55,6 +60,9 @@ function drawRect(ctx, x, y, width, height, fillColor, stroke = false, strokeCol
 	if (stroke) {
 		ctx.strokeStyle = strokeColor;
 		ctx.stroke();
+	}
+	if (angle != 0) {
+		ctx.restore();
 	}
 }
 
@@ -150,7 +158,7 @@ function weapon(x, y, damage, name, picked = false) {
 weapon.prototype = Object.create(item.prototype);
 weapon.prototype.update = function (ctx) {
 	for (var i = 0; i < this.wShape.length; i++) {
-		drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
+		drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.angle, {x : this.x, y : this.y}, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
 	}
 	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
 	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
