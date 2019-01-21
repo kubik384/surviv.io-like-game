@@ -15,24 +15,18 @@ window.addEventListener('keydown', function(e) {
 window.addEventListener('keyup', function(e) {
 	selectedCanvas.pressed[e.code] = false;
 })
+/*
 window.addEventListener('mousedown', function(e) {
 	if (e.button == 0) {
 		selectedCanvas.player.attack();
 	}
 })
+*/
+
 window.addEventListener('mousemove', function(e) {
-	//(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
-	//calculate slope of the line and apply atan2 to calculate angle in radians
-	
-	/*
-	console.log("sin: " + Math.sin(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
-	console.log("cos:" + Math.cos(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
-	console.log("tan::" + Math.tan(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
-	console.log("cot:" + 1 / Math.tan(Math.atan2(coords.x - e.pageX, coords.y - e.pageY) * (180 / Math.PI)));
-	*/
-	
 	selectedCanvas.player.weapons[selectedCanvas.player.selectedWeapon].changeAngle(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
 })
+
 
 function drawCircle(ctx, x, y, radius, fillColor, stroke = false, strokeColor = "black", lineWidth = 1) {
 	ctx.beginPath();
@@ -143,7 +137,6 @@ function weapon(x, y, damage, name, picked = false) {
 		this.lHO = {x : -10, y : -50};
 		this.rHO = {x : 0, y : -15};
 		this.wShape.push({x : -8, y : -20, width : 16, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
-		
 	}
 }
 
@@ -165,10 +158,16 @@ weapon.prototype.changeAngle = function (angle) {
 	this.lHO.y = lY;
 	this.rHO.x = rX;
 	this.rHO.y = rY;
+	var wWidth = this.wShape[0].width - this.wShape[0].x;
+	var wHeight = this.wShape[0].height - this.wShape[0].y;
+	this.wShape[0].width = wWidth * Math.cos(radAngle) - wHeight * Math.sin(radAngle);
+	this.wShape[0].height = wHeight * Math.cos(radAngle) - wWidth * Math.sin(radAngle);
 	this.angle = angle;
 	while(this.angle > 360) {
 		this.angle -= 360;
 	}
+	
+	
 }
 //---------------------- gameArea --------------------------//
 function gameArea() {
@@ -210,7 +209,7 @@ gameArea.prototype.update = function() {
 		delta_x += 1 * this.playerSpeed;
 	}
 	if (this.pressed['KeyS']) {
-		delta_y += 0.5 * this.playerSpeed;
+		delta_y += 1 * this.playerSpeed;
 	}
 	this.player.move(delta_x, delta_y);
 	this.xOffset += delta_x;
