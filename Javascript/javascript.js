@@ -15,13 +15,13 @@ window.addEventListener('keydown', function(e) {
 window.addEventListener('keyup', function(e) {
 	selectedCanvas.pressed[e.code] = false;
 })
-/*
+
 window.addEventListener('mousedown', function(e) {
 	if (e.button == 0) {
 		selectedCanvas.player.attack();
 	}
 })
-*/
+
 
 window.addEventListener('mousemove', function(e) {
 	selectedCanvas.player.weapons[selectedCanvas.player.selectedWeapon].changeAngle(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
@@ -40,16 +40,25 @@ function drawCircle(ctx, x, y, radius, fillColor, stroke = false, strokeColor = 
 	}
 }
 
-function drawRect(ctx, x, y, width, height, fillColor, angle = 0, origin = {x : 0, y : 0}, stroke = false, strokeColor = "black", lineWidth = 1) {
+function drawRect(ctx, x, y, width, height, fillColor, angle = 0, centerpoint = {x : 0, y : 0}, stroke = false, strokeColor = "black", lineWidth = 1) {
 	if (angle != 0) {
 		ctx.save();
-		ctx.translate(origin.x, origin.y);
-		ctx.rotate(angle * Math.PI / 180);
+		ctx.translate(centerpoint.x, centerpoint.y);
+		if (angle < 0) {
+			ctx.rotate((angle + ((Math.abs(angle) - 90) * 2)) * Math.PI/180);
+		} else
+		{
+			ctx.rotate((angle - ((Math.abs(angle) - 90) * 2)) * Math.PI/180);
+		}
 	}
 	ctx.beginPath();
 	ctx.lineWidth = lineWidth;
 	ctx.fillStyle = fillColor;
-	ctx.rect(x, y, width, height); 
+	if (angle != 0) {
+		ctx.rect(-width/2, -height + (centerpoint.y - y), width, height); 
+	} else {
+		ctx.rect(x, y, width, height); 
+	}
 	ctx.fill();
 	if (stroke) {
 		ctx.strokeStyle = strokeColor;
@@ -105,6 +114,10 @@ player.prototype.getCoords = function() {
 	return {x : this.x, y : this.y};
 }
 
+player.prototype.attack = function() {
+	this.weapons[this.selectedWeapon].attack();
+}
+
 //------------ item constructor + inheritance --------------//
 function item(x, y, name="item") {
 	this.x = x;
@@ -132,17 +145,18 @@ function weapon(x, y, damage, name, picked = false) {
 	//For rectangles which create the shape of a weapon
 	this.wShape = [];
 	this.angle = 0;
+	this.attacking = false;
 	
 	if (name == "Hands") {
 		//l/r hand offset
 		this.lHO = {x : -24, y : -23};
 		this.rHO = {x : 24, y : -23};
 	} else if (name == "AK-47") {
-		this.lHO = {x : -10, y : -50};
+		this.lHO = {x : -8, y : -50};
 		this.rHO = {x : 0, y : -15};
 		this.wShape.push({x : -6, y : -20, width : 12, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
 	} else if (name == "UM9") {
-		this.lHO = {x : -10, y : -50};
+		this.lHO = {x : -8, y : -50};
 		this.rHO = {x : 0, y : -15};
 		this.wShape.push({x : -8, y : -20, width : 16, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
 	}
@@ -155,7 +169,40 @@ weapon.prototype.update = function (ctx) {
 	}
 	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
 	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
+	
+	if (this.attacking) {
+		if (this.name = "Hands") {
+			if (this.rPunch) {
+				this.punchFrame += 1;
+				if (this.punchFrame < 9) {
+					this.rHO.x -= 3;
+					this.rHO.y -= 3;
+				} else if (this.punchFrame < 17) {
+					this.rHO.x += 3;
+					this.rHO.y += 3;
+				} else {
+					this.rPunch = false;
+					this.attacking = false;
+				}
+			} else if (this.lPunch) {
+				this.punchFrame += 1;
+				if (this.punchFrame < 9) {
+					this.lHO.x += 3;
+					this.lHO.y -= 3;
+				} else if (this.punchFrame < 17) {
+					this.lHO.x -= 3;
+					this.lHO.y += 3;
+				} else {
+					this.lPunch = false;
+					this.attacking = false;
+				}
+			}
+		} else if ("AK-47") {
+		} else if ("UM9") {
+		}
+	}
 }
+
 weapon.prototype.changeAngle = function (angle) {
 	var radAngle = (this.angle - angle) * (Math.PI / 180);
 	var lX = this.lHO.x * Math.cos(radAngle) - this.lHO.y * Math.sin(radAngle);
@@ -166,16 +213,28 @@ weapon.prototype.changeAngle = function (angle) {
 	this.lHO.y = lY;
 	this.rHO.x = rX;
 	this.rHO.y = rY;
-	var wWidth = this.wShape[0].width - this.wShape[0].x;
-	var wHeight = this.wShape[0].height - this.wShape[0].y;
-	this.wShape[0].width = wWidth * Math.cos(radAngle) - wHeight * Math.sin(radAngle);
-	this.wShape[0].height = wHeight * Math.cos(radAngle) - wWidth * Math.sin(radAngle);
 	this.angle = angle;
 	while(this.angle > 360) {
 		this.angle -= 360;
 	}
+}
 	
-	
+weapon.prototype.attack = function () {
+	if (!this.attacking) {
+		this.attacking = true;
+		if (this.name == "Hands") {
+			if (Math.floor(Math.random() * 2 + 1) == 1) {
+				this.rPunch = true;
+			} else {
+				this.lPunch = true;
+			}
+			this.punchFrame = 0;
+		} else if (this.name == "AK-47") {
+			
+		} else if (this.name == "UM9") {
+			
+		}
+	}
 }
 //---------------------- gameArea --------------------------//
 function gameArea() {
@@ -223,6 +282,7 @@ gameArea.prototype.update = function() {
 	this.xOffset += delta_x;
 	this.yOffset += delta_y;
 	this.context.translate(-delta_x, -delta_y);
+	
 	//--------------------------------------//
 	this.player.update(this.context);
 	
@@ -258,36 +318,3 @@ gameArea.prototype.update = function() {
 		document.getElementById("ui-lower").style.display = "none";
 	}
 }
-
-
-/*
-this.update = function(ctx) {
-		this.lPunch = false;
-		this.rPunch = false;
-		this.punchFrame = 0;
-		if (this.rPunch) {
-			this.punchFrame += 1;
-			if (this.punchFrame < 9) {
-				this.rightHand.x -= 3;
-				this.rightHand.y -= 3;
-			} else if (this.punchFrame < 17) {
-				this.rightHand.x += 3;
-				this.rightHand.y += 3;
-			} else {
-				this.rPunch = false;
-				this.punchFrame = 0;
-			}
-		} else if (this.lPunch) {
-			this.punchFrame += 1;
-			if (this.punchFrame < 9) {
-				this.leftHand.x += 3;
-				this.leftHand.y -= 3;
-			} else if (this.punchFrame < 17) {
-				this.leftHand.x -= 3;
-				this.leftHand.y += 3;
-			} else {
-				this.lPunch = false;
-				this.punchFrame = 0;
-			}
-		}
-*/
