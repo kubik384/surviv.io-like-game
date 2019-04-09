@@ -1,9 +1,5 @@
 "use strict";
 
-/*----------------- Constants -------------------*/
-
-/*-------------------------------------------------*/
-
 var game_area;
 var selectedCanvas;
 
@@ -70,7 +66,8 @@ function drawRect(ctx, x, y, width, height, fillColor, angle = 0, centerpoint = 
 	}
 }
 
-//---------------------- gameArea --------------------------//
+//---------------------- gameArea --------------------------\\
+
 function gameArea() {
 	this.canvas = document.createElement("canvas");
 	this.canvas.width = window.innerWidth;
@@ -84,7 +81,7 @@ function gameArea() {
 	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
 	this.playerSpeed = 15;
 	this.pickedItem = false;
-	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new weapon(400, 300, 20, "AK-47"), new weapon(600, 600, 20, "UM9")];
+	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new ak47(400, 300), new um9(600, 600)];
 }
 
 gameArea.prototype.clear = function() {
@@ -116,7 +113,8 @@ gameArea.prototype.update = function() {
 	this.yOffset += delta_y;
 	this.context.translate(-delta_x, -delta_y);
 	
-	//--------------------------------------//
+	//--------------------------------------\\
+	
 	this.player.update(this.context);
 	
 	// Shows pickup ui if near any item and pick it up if 'F' is pressed	
@@ -152,12 +150,13 @@ gameArea.prototype.update = function() {
 	}
 }
 
-//------------ Player constructor ------------//
+//------------ Player constructor ------------\\
+
 function player(x, y) {
 	this.x = x;
 	this.y = y;
 	this.inventory = [];
-	this.weapons = [new weapon(x, y, 15, "Hands", true)];
+	this.weapons = [new hands(x, y, 0)];
 	this.ammo = [];
 }
 
@@ -170,9 +169,6 @@ player.prototype.update = function(ctx) {
 }
 player.prototype.changeDir = function(angle) {
 	this.weapons[0].changeAngle(angle);
-	if (this.weapons[0].name == "Hands" && this.weapons[0].attacking) {
-		//Reset		
-	}
 }
 // Picks weapon and drops his old if he had one
 player.prototype.pickWeapon = function(weapon) {
@@ -209,7 +205,8 @@ player.prototype.attack = function() {
 }
 
 
-//------------ item constructor + inheritance --------------//
+//------------ item constructor + inheritance --------------\\
+
 function item(x, y, name="item") {
 	this.x = x;
 	this.y = y;
@@ -229,28 +226,18 @@ item.prototype.getName = function () {
 	return this.name;
 }
 
-function weapon(x, y, damage, name, picked = false) {
+function weapon(x, y, damage, name, cooldown, angle = 0, picked = false, lHO = null, rHO = null) {
 	item.call(this,x,y,name);
+	this.lHO = lHO;
+	this.rHO = rHO;
 	this.damage = damage;
+	this.frameCdLeft = 0;
+	this.frameCd = cooldown;
 	this.picked = picked;
-	//For rectangles which create the shape of a weapon
 	this.wShape = [];
 	this.angle = 0;
-	this.attacking = false;
 	
-	if (name == "Hands") {
-		//l/r hand offset
-		this.lHO = {x : -24, y : -23};
-		this.rHO = {x : 24, y : -23};
-	} else if (name == "AK-47") {
-		this.lHO = {x : -8, y : -50};
-		this.rHO = {x : 0, y : -15};
-		this.wShape.push({x : -6, y : -20, width : 12, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
-	} else if (name == "UM9") {
-		this.lHO = {x : -8, y : -50};
-		this.rHO = {x : 0, y : -15};
-		this.wShape.push({x : -8, y : -20, width : 16, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
-	}
+	this.changeAngle(angle);
 }
 
 weapon.prototype = Object.create(item.prototype);
@@ -260,71 +247,103 @@ weapon.prototype.update = function (ctx) {
 	}
 	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
 	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
-	
-	if (this.attacking) {
-		if (this.getName() == "Hands") {
-			var radAngle = (this.angle) * (Math.PI / 180);
-			if (this.rPunch) {
-				this.punchFrame += 1;
-				if (this.punchFrame < 9) {
-					this.rHO.x += - 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-					this.rHO.y -= 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-				} else if (this.punchFrame < 17) {
-					this.rHO.x -= - 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-					this.rHO.y += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-				} else {
-					this.rPunch = false;
-					this.attacking = false;
-				}
-			} else if (this.lPunch) {
-				this.punchFrame += 1;
-				if (this.punchFrame < 9) {
-					this.lHO.x += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-					this.lHO.y -= 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
-				} else if (this.punchFrame < 17) {
-					this.lHO.x -= 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-					this.lHO.y += 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
-				} else {
-					this.lPunch = false;
-					this.attacking = false;
-				}
-			}
-		} else if ("AK-47") {
-		} else if ("UM9") {
-		}
-	}
 }
 
 weapon.prototype.changeAngle = function (angle) {
 	var radAngle = (this.angle - angle) * (Math.PI / 180);
-	var lX = this.lHO.x * Math.cos(radAngle) - this.lHO.y * Math.sin(radAngle);
-	var lY = this.lHO.y * Math.cos(radAngle) + this.lHO.x * Math.sin(radAngle);
-	this.lHO.x = lX;
-	this.lHO.y = lY;
-	var rX = this.rHO.x * Math.cos(radAngle) - this.rHO.y * Math.sin(radAngle);
-	var rY = this.rHO.y * Math.cos(radAngle) + this.rHO.x * Math.sin(radAngle);	
-	this.rHO.x = rX;
-	this.rHO.y = rY;
+	var x = this.lHO.x * Math.cos(radAngle) - this.lHO.y * Math.sin(radAngle);
+	var y = this.lHO.y * Math.cos(radAngle) + this.lHO.x * Math.sin(radAngle);
+	this.lHO.x = x;
+	this.lHO.y = y;
+	x = this.rHO.x * Math.cos(radAngle) - this.rHO.y * Math.sin(radAngle);
+	y = this.rHO.y * Math.cos(radAngle) + this.rHO.x * Math.sin(radAngle);	
+	this.rHO.x = x;
+	this.rHO.y = y;
 	this.angle = angle;
 	while(this.angle > 360) {
 		this.angle -= 360;
 	}
 }
-	
-weapon.prototype.attack = function () {
-	if (!this.attacking) {
-		this.attacking = true;
-		if (this.name == "Hands") {
-			if (Math.floor(Math.random() * 2 + 1) == 1) {
-				this.rPunch = true;
+weapon.prototype.tryCd = function () {
+	if (this.frameCdLeft == 0) {
+		this.frameCdLeft = this.frameCd;
+		return true;
+	}
+	return false;
+}
+
+//---------------------- Individual weapons ------------------- \\
+
+hands.prototype = Object.create(weapon.prototype);
+function hands(x, y, angle = 0, picked = true) {
+	weapon.call(this,x,y,15,"Hands",16,angle,picked,
+	{x : -24, y : -23}, 
+	{x : 24, y : -23} );
+	this.lPunch = false;
+	this.rPunch = false;
+}
+
+hands.prototype.update = function(ctx) {
+	if (this.frameCdLeft > 0) {
+		var radAngle = (this.angle) * (Math.PI / 180);
+		if (this.rPunch) {
+			if (this.frameCdLeft > 8) {
+				this.rHO.x += - 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
+				this.rHO.y -= 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
 			} else {
-				this.lPunch = true;
+				this.rHO.x -= - 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
+				this.rHO.y += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
 			}
-			this.punchFrame = 0;
-		} else if (this.name == "AK-47") {
-			
-		} else if (this.name == "UM9") {
-			
+		} else if (this.lPunch) {
+			if (this.frameCdLeft > 8) {
+				this.lHO.x += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
+				this.lHO.y -= 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
+			} else {
+				this.lHO.x -= 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
+				this.lHO.y += 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
+			}
+		}
+		this.frameCdLeft -= 1;
+	} else {
+		this.lPunch = false;
+		this.rPunch = false;
+	}
+	weapon.prototype.update.call(this,ctx);
+}
+
+hands.prototype.attack = function() {
+	if (this.tryCd()) {
+		if (Math.floor(Math.random() * 2 + 1) == 1) {
+			this.rPunch = true;
+		} else {
+			this.lPunch = true;
 		}
 	}
 }
+
+
+ak47.prototype = Object.create(weapon.prototype);
+function ak47(x, y, angle = 0, picked) {
+	weapon.call(this,x,y,10,"AK-47",4,angle,picked,
+	{x : -8, y : -50},
+	{x : 0, y : -15} );
+	
+	this.wShape.push({x : -6, y : -20, width : 12, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
+}
+
+ak47.prototype.attack = function() {
+}
+
+
+um9.prototype = Object.create(weapon.prototype);
+function um9(x, y, angle = 0, picked) {
+	weapon.call(this,x,y,10,"UM9",4,angle,picked,
+	{x : -8, y : -50},
+	{x : 0, y : -15} );
+
+	this.wShape.push({x : -8, y : -20, width : 16, height : -60, fillColor : "black", stroke : true, strokeColor: "black", lineWidth : 1});
+}
+
+um9.prototype.attack = function() {
+}
+
