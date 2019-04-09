@@ -3,6 +3,8 @@
 var game_area;
 var selectedCanvas;
 
+var handRadius = 10;
+
 function startGame() {
 	game_area = new gameArea();
 	selectedCanvas = game_area;
@@ -17,11 +19,11 @@ window.addEventListener('keyup', function(e) {
 })
 window.addEventListener('mousedown', function(e) {
 	if (e.button == 0) {
-		selectedCanvas.player.attack();
+		selectedCanvas.players[0] .attack();
 	}
 })
 window.addEventListener('mousemove', function(e) {
-	selectedCanvas.player.changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
+	selectedCanvas.players[0].changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
 })
 
 
@@ -66,6 +68,9 @@ function drawRect(ctx, x, y, width, height, fillColor, angle = 0, centerpoint = 
 	}
 }
 
+function circleCircleIntersection(x1, y1, r1, x2, y2, r2) {
+	return Math.pow((x1 - x2),2) + Math.pow((y1 - y2),2) <= Math.pow((r1 + r2),2);
+}
 //---------------------- gameArea --------------------------\\
 
 function gameArea() {
@@ -77,9 +82,8 @@ function gameArea() {
 	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 	this.interval = setInterval(this.update.bind(this), 20);
 	this.context = this.canvas.getContext("2d");
-	this.player = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
+	this.players = [new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2)), new player (200, 200)];
 	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
-	this.playerSpeed = 15;
 	this.pickedItem = false;
 	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new ak47(400, 300), new um9(600, 600)];
 }
@@ -108,28 +112,31 @@ gameArea.prototype.update = function() {
 	if (this.pressed['KeyS']) {
 		delta_y += 1 * this.playerSpeed;
 	}
-	this.player.move(delta_x, delta_y);
+	this.players[0].move(delta_x, delta_y);
 	this.xOffset += delta_x;
 	this.yOffset += delta_y;
 	this.context.translate(-delta_x, -delta_y);
 	
 	//--------------------------------------\\
 	
-	this.player.update(this.context);
+	for (var i = 0; i < this.players.length; i++) {
+		this.players[i].update(this.context);
+	}
+	
 	
 	// Shows pickup ui if near any item and pick it up if 'F' is pressed	
 	var itemInRange = false; 
 	for(i = 0; i < this.items.length; i++) {
-		if (this.items[i].inRange(this.player.getCoords())) {
+		if (this.items[i].inRange(this.players[0].getCoords())) {
 			if (this.pressed['KeyF'] && !this.pickedItem) {
 				// Player picks the weapon
 				if (this.items[i] instanceof weapon) {
-					var droppedweapon = this.player.pickWeapon(this.items.splice(i,1)[0]);
+					var droppedweapon = this.players[0].pickWeapon(this.items.splice(i,1)[0]);
 					this.items.push(droppedweapon);
 				// Puts the item into the player's inventory
 				} else {
 					var itemPick = this.items.splice(i,1)[0];
-					this.player.pickItem(itemPick);
+					this.players[0].pickItem(itemPick);
 				}
 				this.pickedItem = true;
 			} else {
@@ -150,21 +157,36 @@ gameArea.prototype.update = function() {
 	}
 }
 
+gameArea.prototype.checkPlayerHit = function(object, damage) {
+	for (var i = 1; i < this.players.length; i++) {
+		if (circleCircleIntersection(object.x + this.players[0].x, object.y + this.players[0].y, 10, this.players[i].x, this.players[i].y, this.players[i].r)) {
+			this.players[i].takeDamage(damage);
+			return true;
+		}
+	}
+	return false;
+}
+
 //------------ Player constructor ------------\\
 
 function player(x, y) {
 	this.x = x;
 	this.y = y;
+	this.r = 30;
 	this.inventory = [];
 	this.weapons = [new hands(x, y, 0)];
 	this.ammo = [];
+	this.health = 100;
+	this.speed = 15;
 }
 
 //Draws body and player's weapon
 player.prototype.update = function(ctx) {
-	drawCircle(ctx, this.x, this.y, 30, "rgb(244, 217, 66)");
-	for (var i = 0; i < this.weapons.length; i++) {
-		this.weapons[i].update(ctx);
+	if (this.health > 0) {
+		drawCircle(ctx, this.x, this.y, this.r, "rgb(244, 217, 66)");
+		for (var i = 0; i < this.weapons.length; i++) {
+			this.weapons[i].update(ctx);
+		}
 	}
 }
 player.prototype.changeDir = function(angle) {
@@ -172,36 +194,50 @@ player.prototype.changeDir = function(angle) {
 }
 // Picks weapon and drops his old if he had one
 player.prototype.pickWeapon = function(weapon) {
-	var droppedWeapon = this.weapons[0];
-	droppedWeapon.picked = false;
-	weapon.x = this.x;
-	weapon.y = this.y;
-	weapon.picked = true;
-	this.weapons[0] = weapon;
-	document.getElementById("ui-weapon").innerHTML = weapon.getName();
-	return droppedWeapon;
+	if (this.health > 0) {
+		var droppedWeapon = this.weapons[0];
+		droppedWeapon.picked = false;
+		weapon.x = this.x;
+		weapon.y = this.y;
+		weapon.picked = true;
+		this.weapons[0] = weapon;
+		document.getElementById("ui-weapon").innerHTML = weapon.getName();
+		return droppedWeapon;
+	}
 }
 // Puts passed item into player's inventory
 player.prototype.pickItem = function(item) {
-	this.inventory.push(item);
-	var itemDiv = document.createElement("div");
-	var itemName = document.createTextNode(item.getName());
-	itemDiv.appendChild(itemName);
-	document.getElementById("ui-inventory").appendChild(itemDiv);
+	if (this.health > 0) {
+		this.inventory.push(item);
+		var itemDiv = document.createElement("div");
+		var itemName = document.createTextNode(item.getName());
+		itemDiv.appendChild(itemName);
+		document.getElementById("ui-inventory").appendChild(itemDiv);
+	}
 }
 // Changes the player's x, y coordinates
 player.prototype.move = function(delta_x, delta_y) {
-	this.x += delta_x;
-	this.y += delta_y;
-	this.weapons[0].x += delta_x;
-	this.weapons[0].y += delta_y;
+	if (this.health > 0) {
+		this.x += delta_x;
+		this.y += delta_y;
+		this.weapons[0].x += delta_x;
+		this.weapons[0].y += delta_y;
+	}
 }
 player.prototype.getCoords = function() {
 	return {x : this.x, y : this.y};
 }
 
 player.prototype.attack = function() {
-	this.weapons[0].attack();
+	if (this.health > 0) {
+		this.weapons[0].attack();
+	}
+}
+
+player.prototype.takeDamage = function(damage) {
+	if (this.health > 0) {
+		this.health -= damage;
+	}
 }
 
 
@@ -245,8 +281,8 @@ weapon.prototype.update = function (ctx) {
 	for (var i = 0; i < this.wShape.length; i++) {
 		drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.angle, {x : this.x, y : this.y}, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
 	}
-	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
-	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, 10, "rgb(244, 217, 66)", true, "black", 3);
+	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, handRadius, "rgb(244, 217, 66)", true, "black", 3);
+	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, handRadius, "rgb(244, 217, 66)", true, "black", 3);
 }
 
 weapon.prototype.changeAngle = function (angle) {
@@ -281,6 +317,7 @@ function hands(x, y, angle = 0, picked = true) {
 	{x : 24, y : -23} );
 	this.lPunch = false;
 	this.rPunch = false;
+	this.hit = false;
 }
 
 hands.prototype.update = function(ctx) {
@@ -303,10 +340,16 @@ hands.prototype.update = function(ctx) {
 				this.lHO.y += 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
 			}
 		}
+		if (!this.hit) {
+			if (selectedCanvas.checkPlayerHit(this.rPunch ? this.rHO : this.lHO, this.damage)) {
+				this.hit = true;
+			}
+		}
 		this.frameCdLeft -= 1;
 	} else {
 		this.lPunch = false;
 		this.rPunch = false;
+		this.hit = false;
 	}
 	weapon.prototype.update.call(this,ctx);
 }
@@ -346,4 +389,6 @@ function um9(x, y, angle = 0, picked) {
 
 um9.prototype.attack = function() {
 }
+
+
 
