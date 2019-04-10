@@ -91,6 +91,7 @@ function gameArea() {
 	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
 	this.lMBDown = false;
 	this.pickedItem = false;
+	this.attacked = false;
 	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new ak47(400, 300), new um9(600, 600)];
 }
 
@@ -109,26 +110,32 @@ gameArea.prototype.update = function() {
 		var delta_x = 0;
 		var delta_y = 0;
 		if (this.pressed['KeyA']) {
-			delta_x -= 1 * this.playerSpeed;
+			delta_x -= 1;
 		}
 		if (this.pressed['KeyW']) {
-			delta_y -= 1 * this.playerSpeed;
+			delta_y -= 1;
 		}
 		if (this.pressed['KeyD']) {
-			delta_x += 1 * this.playerSpeed;
+			delta_x += 1;
 		}
 		if (this.pressed['KeyS']) {
-			delta_y += 1 * this.playerSpeed;
+			delta_y += 1;
 		}
+		delta_x *= this.players[0].getSpeed();
+		delta_y *= this.players[0].getSpeed();
 		this.players[0].move(delta_x, delta_y);
-		this.xOffset += delta_x;
-		this.yOffset += delta_y;
-		this.context.translate(-delta_x, -delta_y);
-		
-		if (this.lMBDown) {
-			this.players[0].attack();
+		this.moveScreenBy(delta_x,delta_y);
+		if (!this.attacked) {
+			if (this.lMBDown) {
+				this.players[0].attack();
+				this.attacked = true;
+			}
+		} else {
+			if (!this.lMBDown) {
+				this.attacked = false;
+			}
 		}
-	
+		
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed
 		var itemInRange = false; 
 		for(i = 0; i < this.items.length; i++) {
@@ -172,8 +179,8 @@ gameArea.prototype.update = function() {
 
 gameArea.prototype.checkPlayerHit = function(fist, damage) {
 	for (var i = 1; i < this.players.length; i++) {
-		var body = this.players[0];
-		if (circleCircleIntersection(fist.x + body.x, fist.y + body.y, fist.r, body.x, body.y, body.r)) {
+		var body = this.players[0].getBody();
+		if (circleCircleIntersection(fist.x + body.x, fist.y + body.y, handRadius, body.x, body.y, body.r)) {
 			this.players[i].takeDamage(damage);
 			return true;
 		}
@@ -181,17 +188,23 @@ gameArea.prototype.checkPlayerHit = function(fist, damage) {
 	return false;
 }
 
-gameArea.prototype.keyUp = function(e) {
-	this.pressed[e.code] = true;
+gameArea.prototype.moveScreenBy = function(x,y) {
+	this.xOffset += x;
+	this.yOffset += y;
+	this.context.translate(-x,-y);
 }
-gameArea.prototype.keyDown = function(e) {
+
+gameArea.prototype.keyUp = function(e) {
 	this.pressed[e.code] = false;
 }
+gameArea.prototype.keyDown = function(e) {
+	this.pressed[e.code] = true;
+}
 gameArea.prototype.lMouseDown = function(e) {
-	lMBDown = true;
+	this.lMBDown = true;
 }
 gameArea.prototype.lMouseUp = function(e) {
-	lMBDown = false;
+	this.lMBDown = false;
 }
 
 //------------ Player constructor ------------\\
@@ -219,7 +232,7 @@ player.prototype.changeDir = function(angle) {
 player.prototype.pickWeapon = function(weapon) {
 	var droppedWeapon = this.weapons[0];
 	droppedWeapon.drop();
-	weapon.move(this.x, this.y);
+	weapon.move(this.body.x, this.body.y);
 	weapon.pickup();
 	this.weapons[0] = weapon;
 	document.getElementById("ui-weapon").innerHTML = weapon.getName();
@@ -235,9 +248,9 @@ player.prototype.pickItem = function(item) {
 }
 // Changes the player's x, y coordinates
 player.prototype.move = function(delta_x, delta_y) {
-	this.x += delta_x;
-	this.y += delta_y;
-	this.weapons[0].move(this.x, this.y);
+	this.body.x += delta_x;
+	this.body.y += delta_y;
+	this.weapons[0].move(this.body.x, this.body.y);
 }
 player.prototype.getBody = function() {
 	return this.body;
@@ -253,6 +266,10 @@ player.prototype.takeDamage = function(damage) {
 
 player.prototype.isAlive = function() {
 	return (this.health > 0);
+}
+
+player.prototype.getSpeed = function() {
+	return this.speed;
 }
 
 
@@ -340,7 +357,7 @@ weapon.prototype.pickup = function() {
 
 fists.prototype = Object.create(weapon.prototype);
 function fists(x, y, angle = 0, picked = true) {
-	weapon.call(this,x,y,15,"Fists",16,angle,picked,
+	weapon.call(this,x,y,15,"Fists",14,angle,picked,
 	{x : -24, y : -23}, 
 	{x : 24, y : -23} );
 	this.lPunch = false;
@@ -352,7 +369,7 @@ fists.prototype.update = function(ctx) {
 	if (this.frameCdLeft > 0) {
 		var radAngle = (this.angle) * (Math.PI / 180);
 		if (this.rPunch) {
-			if (this.frameCdLeft > 8) {
+			if (this.frameCdLeft > 7) {
 				this.rHO.x += - 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
 				this.rHO.y -= 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
 			} else {
@@ -360,7 +377,7 @@ fists.prototype.update = function(ctx) {
 				this.rHO.y += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
 			}
 		} else if (this.lPunch) {
-			if (this.frameCdLeft > 8) {
+			if (this.frameCdLeft > 7) {
 				this.lHO.x += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
 				this.lHO.y -= 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
 			} else {
