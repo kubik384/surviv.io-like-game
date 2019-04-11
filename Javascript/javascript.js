@@ -121,8 +121,9 @@ gameArea.prototype.update = function() {
 		if (this.pressed['KeyS']) {
 			delta_y += 1;
 		}
-		delta_x *= this.players[0].getSpeed();
-		delta_y *= this.players[0].getSpeed();
+		var pSpeed = this.players[0].getSpeed();
+		delta_x *= pSpeed;
+		delta_y *= pSpeed;
 		this.players[0].move(delta_x, delta_y);
 		this.moveScreenBy(delta_x,delta_y);
 		if (!this.attacked) {
@@ -177,10 +178,12 @@ gameArea.prototype.update = function() {
 	}
 }
 
+//Change fists to create a "zone" between both fists and check for intersection instead
 gameArea.prototype.checkPlayerHit = function(fist, damage) {
+	var pBody = this.players[0].getBody();
 	for (var i = 1; i < this.players.length; i++) {
-		var body = this.players[0].getBody();
-		if (circleCircleIntersection(fist.x + body.x, fist.y + body.y, handRadius, body.x, body.y, body.r)) {
+		var body = this.players[i].getBody();
+		if (circleCircleIntersection(fist.x + pBody.x, fist.y + pBody.y, handRadius, body.x, body.y, body.r)) {
 			this.players[i].takeDamage(damage);
 			return true;
 		}
@@ -357,7 +360,7 @@ weapon.prototype.pickup = function() {
 
 fists.prototype = Object.create(weapon.prototype);
 function fists(x, y, angle = 0, picked = true) {
-	weapon.call(this,x,y,15,"Fists",14,angle,picked,
+	weapon.call(this,x,y,15,"Fists",17,angle,picked,
 	{x : -24, y : -23}, 
 	{x : 24, y : -23} );
 	this.lPunch = false;
@@ -369,20 +372,20 @@ fists.prototype.update = function(ctx) {
 	if (this.frameCdLeft > 0) {
 		var radAngle = (this.angle) * (Math.PI / 180);
 		if (this.rPunch) {
-			if (this.frameCdLeft > 7) {
-				this.rHO.x += - 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-				this.rHO.y -= 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-			} else {
-				this.rHO.x -= - 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-				this.rHO.y += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
+			if (this.frameCdLeft > 11) {
+				this.rHO.x += - 4 * Math.cos(radAngle) - 5 * Math.sin(radAngle);
+				this.rHO.y -= 5 * Math.cos(radAngle) - 4 * Math.sin(radAngle);
+			} else if (this.frameCdLeft > 5) {
+				this.rHO.x -= - 4 * Math.cos(radAngle) - 5 * Math.sin(radAngle);
+				this.rHO.y += 5 * Math.cos(radAngle) - 4 * Math.sin(radAngle);
 			}
 		} else if (this.lPunch) {
-			if (this.frameCdLeft > 7) {
-				this.lHO.x += 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-				this.lHO.y -= 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
-			} else {
-				this.lHO.x -= 3 * Math.cos(radAngle) - 3 * Math.sin(radAngle);
-				this.lHO.y += 3 * Math.cos(radAngle) + 3 * Math.sin(radAngle);
+			if (this.frameCdLeft > 11) {
+				this.lHO.x += 4 * Math.cos(radAngle) - 5 * Math.sin(radAngle);
+				this.lHO.y -= 5 * Math.cos(radAngle) + 4 * Math.sin(radAngle);
+			} else if (this.frameCdLeft > 5) {
+				this.lHO.x -= 4 * Math.cos(radAngle) - 5 * Math.sin(radAngle);
+				this.lHO.y += 5 * Math.cos(radAngle) + 4 * Math.sin(radAngle);
 			}
 		}
 		if (!this.hit) {
