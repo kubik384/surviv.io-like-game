@@ -31,51 +31,6 @@ window.addEventListener('mousemove', function(e) {
 	selectedCanvas.players[0].changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
 })
 
-
-function drawCircle(ctx, x, y, radius, fillColor, stroke = false, strokeColor = "black", lineWidth = 1) {
-	ctx.beginPath();
-	ctx.arc(x, y, radius, 0, 2 * Math.PI);
-	ctx.lineWidth = lineWidth;
-	ctx.fillStyle = fillColor;
-	ctx.fill();
-	if (stroke) {
-		ctx.strokeStyle = strokeColor;
-		ctx.stroke();
-	}
-}
-
-function drawRect(ctx, x, y, width, height, fillColor, angle = 0, centerpoint = {x : 0, y : 0}, stroke = false, strokeColor = "black", lineWidth = 1) {
-	if (angle != 0) {
-		ctx.save();
-		ctx.translate(centerpoint.x, centerpoint.y);
-		if (angle < 0) {
-			ctx.rotate((angle + ((Math.abs(angle) - 90) * 2)) * Math.PI/180);
-		} else
-		{
-			ctx.rotate((angle - ((Math.abs(angle) - 90) * 2)) * Math.PI/180);
-		}
-	}
-	ctx.beginPath();
-	ctx.lineWidth = lineWidth;
-	ctx.fillStyle = fillColor;
-	if (angle != 0) {
-		ctx.rect(-width/2, -height + (centerpoint.y - y), width, height); 
-	} else {
-		ctx.rect(x, y, width, height); 
-	}
-	ctx.fill();
-	if (stroke) {
-		ctx.strokeStyle = strokeColor;
-		ctx.stroke();
-	}
-	if (angle != 0) {
-		ctx.restore();
-	}
-}
-
-function circleCircleIntersection(x1, y1, r1, x2, y2, r2) {
-	return Math.pow((x1 - x2),2) + Math.pow((y1 - y2),2) <= Math.pow((r1 + r2),2);
-}
 //---------------------- gameArea --------------------------\\
 
 function gameArea() {
@@ -93,6 +48,7 @@ function gameArea() {
 	this.pickedItem = false;
 	this.attacked = false;
 	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new ak47(400, 300), new um9(600, 600)];
+	this.objects = [];
 }
 
 gameArea.prototype.clear = function() {
@@ -124,7 +80,7 @@ gameArea.prototype.update = function() {
 		var pSpeed = this.players[0].getSpeed();
 		delta_x *= pSpeed;
 		delta_y *= pSpeed;
-		this.players[0].move(delta_x, delta_y);
+		this.players[0].move(delta_x,delta_y);
 		this.moveScreenBy(delta_x,delta_y);
 		if (!this.attacked) {
 			if (this.lMBDown) {
@@ -176,6 +132,10 @@ gameArea.prototype.update = function() {
 			this.players[i].update(this.context);
 		}
 	}
+	
+	for (var i = 0; i < this.objects.length; i++) {
+		this.objects[i].update();
+	}
 }
 
 //Change fists to create a "zone" between both fists and check for intersection instead
@@ -185,6 +145,7 @@ gameArea.prototype.checkPlayerHit = function(fist, damage) {
 		var body = this.players[i].getBody();
 		if (circleCircleIntersection(fist.x + pBody.x, fist.y + pBody.y, handRadius, body.x, body.y, body.r)) {
 			this.players[i].takeDamage(damage);
+			this.objects.push(new bloodstain(fist.x + pBody.x, fist.y + pBody.y));
 			return true;
 		}
 	}
@@ -208,6 +169,101 @@ gameArea.prototype.lMouseDown = function(e) {
 }
 gameArea.prototype.lMouseUp = function(e) {
 	this.lMBDown = false;
+}
+
+//------------- Objects for gameArea ---------------\\
+
+function game_object(components) {
+	this.components = [components];
+}
+
+function bloodstain(x,y) {
+	
+}
+
+function tree(x,y) {
+	
+}
+
+function barrel(x,y) {
+	
+}
+
+//------------- Shapes -----------------------\\
+
+function component(x,y) {
+	this.x = x;
+	this.y = y;
+}
+
+function shape(fillColor, lineWidth, stroke, strokeColor) {
+	this.fillColor = fillColor;
+	this.lineWidth = lineWidth;
+	this.stroke = stroke;
+	this.strokeColor = strokeColor;
+	this.angle = angle;
+	this.rotCenterpoint = rotCenterpoint;
+}
+
+function circle(fillColor, lineWidth = 1 stroke = false, strokeColor = null) {
+}
+
+circle.prototype.circleIntersection = function(circle) {
+	return Math.pow((x1 - x2),2) + Math.pow((y1 - y2),2) <= Math.pow((r1 + r2),2);
+}
+
+circle.prototype.draw(ctx) {
+	ctx.beginPath();
+	ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+	ctx.lineWidth = this.lineWidth;
+	ctx.fillStyle = this.fillColor;
+	ctx.fill();
+	if (this.stroke) {
+		ctx.strokeStyle = this.strokeColor;
+		ctx.stroke();
+	}
+}
+
+function rectangle() {
+	this.width = width;
+	this.height = height;
+}
+
+rectangle.prototype.draw = function(ctx, x, y, width, height, fillColor, angle = 0, centerpoint = {x : 0, y : 0}, stroke = false, strokeColor = "black", lineWidth = 1) {
+	if (angle != 0) {
+		ctx.save();
+		ctx.translate(centerpoint.x, centerpoint.y);
+		if (angle < 0) {
+			ctx.rotate((angle + ((Math.abs(angle) - 90) * 2)) * Math.PI/180);
+		} else
+		{
+			ctx.rotate((angle - ((Math.abs(angle) - 90) * 2)) * Math.PI/180);
+		}
+	}
+	ctx.beginPath();
+	ctx.lineWidth = lineWidth;
+	ctx.fillStyle = fillColor;
+	if (angle != 0) {
+		ctx.rect(-width/2, -height + (centerpoint.y - y), width, height); 
+	} else {
+		ctx.rect(x, y, width, height); 
+	}
+	ctx.fill();
+	if (stroke) {
+		ctx.strokeStyle = strokeColor;
+		ctx.stroke();
+	}
+	if (angle != 0) {
+		ctx.restore();
+	}
+}
+
+function img() {
+	
+}
+
+img.prototype.draw() {
+	ctx.drawImage(img, x, y);
 }
 
 //------------ Player constructor ------------\\
