@@ -28,7 +28,7 @@ window.addEventListener('mouseup', function(e) {
 	}
 })
 window.addEventListener('mousemove', function(e) {
-	selectedCanvas.players[0].changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
+	selectedCanvas.mousemove(e);
 })
 
 //---------------------- gameArea --------------------------\\
@@ -42,13 +42,11 @@ function gameArea() {
 	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 	this.interval = setInterval(this.update.bind(this), 20);
 	this.context = this.canvas.getContext("2d");
-	this.players = [new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2)), new player (200, 200)];
-	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false};
-	this.lMBDown = false;
+	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false, 'lMBDown' = false};
 	this.pickedItem = false;
 	this.attacked = false;
-	this.items = [new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new ak47(400, 300), new um9(600, 600)];
-	this.objects = [];
+	this.objects = [new player (200, 200), new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new ak47(400, 300), new um9(600, 600)];
+	this.player = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
 }
 
 gameArea.prototype.clear = function() {
@@ -57,11 +55,8 @@ gameArea.prototype.clear = function() {
 
 gameArea.prototype.update = function() {
 	this.clear();
-	for(var i = 0; i < this.items.length; i++) {
-		this.items[i].update(this.context);
-	}
 	
-	if (this.players[0].isAlive()) {
+	if (this.player.isAlive()) {
 		// Character movement
 		var delta_x = 0;
 		var delta_y = 0;
@@ -77,14 +72,14 @@ gameArea.prototype.update = function() {
 		if (this.pressed['KeyS']) {
 			delta_y += 1;
 		}
-		var pSpeed = this.players[0].getSpeed();
+		var pSpeed = this.player.getSpeed();
 		delta_x *= pSpeed;
 		delta_y *= pSpeed;
-		this.players[0].move(delta_x,delta_y);
+		this.player.move(delta_x,delta_y);
 		this.moveScreenBy(delta_x,delta_y);
 		if (!this.attacked) {
 			if (this.lMBDown) {
-				this.players[0].attack();
+				this.player.attack();
 				this.attacked = true;
 			}
 		} else {
@@ -96,17 +91,17 @@ gameArea.prototype.update = function() {
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed
 		var itemInRange = false; 
 		for(i = 0; i < this.items.length; i++) {
-			var body = this.players[0].getBody();
+			var body = this.player.getBody();
 			if (this.items[i].inRange(body.x, body.y)) {
 				if (this.pressed['KeyF'] && !this.pickedItem) {
 					// Player picks the weapon
 					if (this.items[i] instanceof weapon) {
-						var droppedweapon = this.players[0].pickWeapon(this.items.splice(i,1)[0]);
+						var droppedweapon = this.player.pickWeapon(this.items.splice(i,1)[0]);
 						this.items.push(droppedweapon);
 					// Puts the item into the player's inventory
 					} else {
 						var itemPick = this.items.splice(i,1)[0];
-						this.players[0].pickItem(itemPick);
+						this.player.pickItem(itemPick);
 					}
 					this.pickedItem = true;
 				} else {
@@ -125,22 +120,17 @@ gameArea.prototype.update = function() {
 		} else if (document.getElementById("ui-lower").style.display == "block") {
 			document.getElementById("ui-lower").style.display = "none";
 		}
+		
+		this.player.update();
 	}
-	
-	for (var i = 0; i < this.players.length; i++) {
-		if (this.players[i].isAlive()) {
-			this.players[i].update(this.context);
-		}
-	}
-	
-	for (var i = 0; i < this.objects.length; i++) {
-		this.objects[i].update();
+	for(var i = 0; i < this.objects.length; i++) {
+		this.objects[i].update(this.context);
 	}
 }
 
 //Change fists to create a "zone" between both fists and check for intersection instead
 gameArea.prototype.checkPlayerHit = function(fist, damage) {
-	var pBody = this.players[0].getBody();
+	var pBody = this.player.getBody();
 	for (var i = 1; i < this.players.length; i++) {
 		var body = this.players[i].getBody();
 		if (circleCircleIntersection(fist.x + pBody.x, fist.y + pBody.y, handRadius, body.x, body.y, body.r)) {
@@ -165,10 +155,14 @@ gameArea.prototype.keyDown = function(e) {
 	this.pressed[e.code] = true;
 }
 gameArea.prototype.lMouseDown = function(e) {
-	this.lMBDown = true;
+	this.pressed['lMBDown'] = true;
 }
 gameArea.prototype.lMouseUp = function(e) {
-	this.lMBDown = false;
+	this.pressed['lMBDown'] = false;
+}
+
+gameArea.prototype.mousemove = function(e) {
+	player.changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
 }
 
 //------------- Objects for gameArea ---------------\\
@@ -177,16 +171,22 @@ function game_object(components) {
 	this.components = [components];
 }
 
+game_object.prototype.update = function () {
+	//-- Virtual function --//
+}
+
+bloodstain.prototype = Object.create(game_object.prototype);
 function bloodstain(x,y) {
-	
+	game_object.call(new img());
 }
 
+tree.prototype = Object.create(game_object.prototype);
 function tree(x,y) {
-	
+	game_object.call(new circle(Math.floor((Math.rand()*10 + 10)), fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = true, strokeColor = "rgb(139,69,19)");
 }
 
+barrel.prototype = Object.create(game_object.prototype);
 function barrel(x,y) {
-	
 }
 
 //------------- Shapes -----------------------\\
@@ -196,7 +196,16 @@ function component(x,y) {
 	this.y = y;
 }
 
-function shape(fillColor, lineWidth, stroke, strokeColor) {
+component.prototype.getX = function () {
+	return this.x;
+}
+
+component.prototype.getY = function () {
+	return this.y;
+}
+
+shape.prototype = Object.create(component.prototype);
+function shape(fillColor, lineWidth, stroke, strokeColor, angle = 0, rotCenterpoint = [0,0]) {
 	this.fillColor = fillColor;
 	this.lineWidth = lineWidth;
 	this.stroke = stroke;
@@ -205,14 +214,20 @@ function shape(fillColor, lineWidth, stroke, strokeColor) {
 	this.rotCenterpoint = rotCenterpoint;
 }
 
-function circle(fillColor, lineWidth = 1 stroke = false, strokeColor = null) {
+circle.prototype = Object.create(shape.prototype);
+function circle(radius, fillColor = "rgb(255,255,255)", lineWidth = 1 stroke = false, strokeColor = null) {
+	this.radius = radius;
 }
 
 circle.prototype.circleIntersection = function(circle) {
-	return Math.pow((x1 - x2),2) + Math.pow((y1 - y2),2) <= Math.pow((r1 + r2),2);
+	return Math.pow((this.x - circle.getX()),2) + Math.pow((this.y - circle.getY()),2) <= Math.pow((this.radius + circle.getRadius()),2);
 }
 
-circle.prototype.draw(ctx) {
+circle.prototype.getRadius = function () {
+	return this.radius;
+}
+
+circle.prototype.update(ctx) {
 	ctx.beginPath();
 	ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
 	ctx.lineWidth = this.lineWidth;
@@ -224,6 +239,7 @@ circle.prototype.draw(ctx) {
 	}
 }
 
+rectangle.prototype = Object.create(shape.prototype);
 function rectangle() {
 	this.width = width;
 	this.height = height;
@@ -258,6 +274,7 @@ rectangle.prototype.draw = function(ctx, x, y, width, height, fillColor, angle =
 	}
 }
 
+img.prototype = Object.create(shape.prototype);
 function img() {
 	
 }
@@ -268,8 +285,9 @@ img.prototype.draw() {
 
 //------------ Player constructor ------------\\
 
+player.prototype = Object.create(game_object.prototype);
 function player(x, y) {
-	this.body = { x:x, y:y, r:30, rgb:"rgb(244, 217, 66)"};
+	game_object.call(new circle( x:x, y:y, r:30, rgb:"rgb(244, 217, 66)" );
 	this.inventory = [];
 	this.weapons = [new fists(x, y, 0)];
 	this.ammo = [];
@@ -279,7 +297,6 @@ function player(x, y) {
 
 //Draws body and player's weapon
 player.prototype.update = function(ctx) {
-	drawCircle(ctx, this.body.x, this.body.y, this.body.r, this.body.rgb);
 	for (var i = 0; i < this.weapons.length; i++) {
 		this.weapons[i].update(ctx);
 	}
@@ -334,6 +351,7 @@ player.prototype.getSpeed = function() {
 
 //------------ item constructor + inheritance --------------\\
 
+item.prototype = Object.create(game_object.prototype);
 function item(x, y, name="item") {
 	this.x = x;
 	this.y = y;
@@ -353,6 +371,7 @@ item.prototype.getName = function () {
 	return this.name;
 }
 
+weapon.prototype = Object.create(item.prototype);
 function weapon(x, y, damage, name, cooldown, angle = 0, picked = false, lHO = null, rHO = null) {
 	item.call(this,x,y,name);
 	this.lHO = lHO;
@@ -367,7 +386,6 @@ function weapon(x, y, damage, name, cooldown, angle = 0, picked = false, lHO = n
 	this.changeAngle(angle);
 }
 
-weapon.prototype = Object.create(item.prototype);
 weapon.prototype.update = function (ctx) {
 	for (var i = 0; i < this.wShape.length; i++) {
 		drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.angle, {x : this.x, y : this.y}, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
