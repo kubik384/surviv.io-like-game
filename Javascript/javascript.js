@@ -123,7 +123,7 @@ gameArea.prototype.update = function() {
 			document.getElementById("ui-lower").style.display = "none";
 		}
 		
-		this.player.update();
+		this.player.update(this.context);
 	}
 	for(var i = 0; i < this.objects.length; i++) {
 		this.objects[i].update(this.context);
@@ -365,7 +365,7 @@ function item(x, y, name="item") {
 }
 
 item.prototype.update = function(ctx) {
-	drawCircle(ctx, this.x, this.y, 20, "rgb(255, 255, 255)", true);
+	this.components[0].update(ctx);
 }
 // Checks if the passed x,y values are in range of the item (to be picked up)
 item.prototype.inRange = function(x,y) {
@@ -394,9 +394,9 @@ function weapon(x, y, damage, name, cooldown, angle = 0, picked = false, lHO = n
 
 weapon.prototype.update = function (ctx) {
 	for (var i = 0; i < this.wShape.length; i++) {
-		drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.angle, {x : this.x, y : this.y}, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
+		//drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.angle, {x : this.x, y : this.y}, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
 	}
-	this.components[0].update(ctx, this.x + this.lHO.x, this.y + this.lHO.y, handRadius, "rgb(244, 217, 66)", true, "black", 3);
+	this.components[0].update(ctx);
 	this.components[0].update(ctx);
 }
 
