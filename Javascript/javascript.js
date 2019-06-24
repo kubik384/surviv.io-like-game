@@ -42,7 +42,7 @@ function gameArea() {
 	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 	this.interval = setInterval(this.update.bind(this), 20);
 	this.context = this.canvas.getContext("2d");
-	this.pressed = {'KeyW' : false, 'KeyA' : false, 'KeyS' : false, 'KeyD' : false, 'KeyF': false, 'lMBDown' = false};
+	this.pressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'KeyF':false, 'lMBDown':false};
 	this.pickedItem = false;
 	this.attacked = false;
 	this.objects = [new player (200, 200), new item(50, 100), new item(50, 100), new item(50, 100), new item(50, 100), new ak47(400, 300), new um9(600, 600)];
@@ -90,29 +90,31 @@ gameArea.prototype.update = function() {
 		
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed
 		var itemInRange = false; 
-		for(i = 0; i < this.items.length; i++) {
+		for(i = 0; i < this.objects.length; i++) {
 			var body = this.player.getBody();
-			if (this.items[i].inRange(body.x, body.y)) {
-				if (this.pressed['KeyF'] && !this.pickedItem) {
-					// Player picks the weapon
-					if (this.items[i] instanceof weapon) {
-						var droppedweapon = this.player.pickWeapon(this.items.splice(i,1)[0]);
-						this.items.push(droppedweapon);
-					// Puts the item into the player's inventory
+			if (this.objects[i] instanceof item) {
+				if (this.objects[i].inRange(body.x, body.y)) {
+					if (this.pressed['KeyF'] && !this.pickedItem) {
+						// Player picks the weapon
+						if (this.objects[i] instanceof weapon) {
+							var droppedweapon = this.player.pickWeapon(this.objects.splice(i,1)[0]);
+							this.objects.push(droppedweapon);
+						// Puts the item into the player's inventory
+						} else {
+							var itemPick = this.objects.splice(i,1)[0];
+							this.player.pickItem(itemPick);
+						}
+						this.pickedItem = true;
 					} else {
-						var itemPick = this.items.splice(i,1)[0];
-						this.player.pickItem(itemPick);
+						if (!this.pressed['KeyF'] && this.pickedItem) {
+							this.pickedItem = false;
+						}
+						document.getElementById("pick-item").innerHTML = this.objects[i].getName();
+						document.getElementById("ui-lower").style.display = "block";
+						itemInRange = true;
 					}
-					this.pickedItem = true;
-				} else {
-					if (!this.pressed['KeyF'] && this.pickedItem) {
-						this.pickedItem = false;
-					}
-					document.getElementById("pick-item").innerHTML = this.items[i].getName();
-					document.getElementById("ui-lower").style.display = "block";
-					itemInRange = true;
+				break;
 				}
-			break;
 			}
 		}
 		if (itemInRange) {
@@ -167,8 +169,8 @@ gameArea.prototype.mousemove = function(e) {
 
 //------------- Objects for gameArea ---------------\\
 
-function game_object(components) {
-	this.components = [components];
+function game_object(component) {
+	this.components = [component];
 }
 
 game_object.prototype.update = function () {
@@ -182,7 +184,7 @@ function bloodstain(x,y) {
 
 tree.prototype = Object.create(game_object.prototype);
 function tree(x,y) {
-	game_object.call(new circle(Math.floor((Math.rand()*10 + 10)), fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = true, strokeColor = "rgb(139,69,19)");
+	game_object.call(new circle(200, 200, Math.floor((Math.random()*10 + 10)), fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = true, strokeColor = "rgb(139,69,19)"));
 }
 
 barrel.prototype = Object.create(game_object.prototype);
@@ -205,7 +207,8 @@ component.prototype.getY = function () {
 }
 
 shape.prototype = Object.create(component.prototype);
-function shape(fillColor, lineWidth, stroke, strokeColor, angle = 0, rotCenterpoint = [0,0]) {
+function shape(x, y, fillColor, lineWidth, stroke = false, strokeColor = "rgb(255,255,255)", angle = 0, rotCenterpoint = [0,0]) {
+	component.call(this,x,y);
 	this.fillColor = fillColor;
 	this.lineWidth = lineWidth;
 	this.stroke = stroke;
@@ -215,7 +218,8 @@ function shape(fillColor, lineWidth, stroke, strokeColor, angle = 0, rotCenterpo
 }
 
 circle.prototype = Object.create(shape.prototype);
-function circle(radius, fillColor = "rgb(255,255,255)", lineWidth = 1 stroke = false, strokeColor = null) {
+function circle(x, y, radius, fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = false, strokeColor = null) {
+	shape.call(this, x, y, fillColor, lineWidth, stroke, strokeColor);
 	this.radius = radius;
 }
 
@@ -227,7 +231,7 @@ circle.prototype.getRadius = function () {
 	return this.radius;
 }
 
-circle.prototype.update(ctx) {
+circle.prototype.update = function(ctx) {
 	ctx.beginPath();
 	ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
 	ctx.lineWidth = this.lineWidth;
@@ -279,7 +283,7 @@ function img() {
 	
 }
 
-img.prototype.draw() {
+img.prototype.draw = function() {
 	ctx.drawImage(img, x, y);
 }
 
@@ -287,7 +291,8 @@ img.prototype.draw() {
 
 player.prototype = Object.create(game_object.prototype);
 function player(x, y) {
-	game_object.call(new circle( x:x, y:y, r:30, rgb:"rgb(244, 217, 66)" );
+	game_object.call(this, new circle(x, y, 30, "rgb(244, 217, 66)"));
+	this.body = this.components[0];
 	this.inventory = [];
 	this.weapons = [new fists(x, y, 0)];
 	this.ammo = [];
@@ -353,6 +358,7 @@ player.prototype.getSpeed = function() {
 
 item.prototype = Object.create(game_object.prototype);
 function item(x, y, name="item") {
+	game_object.call(this, new circle(x, y, 10, "rgb(244, 217, 66)"));
 	this.x = x;
 	this.y = y;
 	this.name = name;
@@ -390,8 +396,8 @@ weapon.prototype.update = function (ctx) {
 	for (var i = 0; i < this.wShape.length; i++) {
 		drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.angle, {x : this.x, y : this.y}, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
 	}
-	drawCircle(ctx, this.x + this.lHO.x, this.y + this.lHO.y, handRadius, "rgb(244, 217, 66)", true, "black", 3);
-	drawCircle(ctx, this.x + this.rHO.x, this.y + this.rHO.y, handRadius, "rgb(244, 217, 66)", true, "black", 3);
+	this.components[0].update(ctx, this.x + this.lHO.x, this.y + this.lHO.y, handRadius, "rgb(244, 217, 66)", true, "black", 3);
+	this.components[0].update(ctx);
 }
 
 weapon.prototype.changeAngle = function (angle) {
