@@ -3,8 +3,6 @@
 var game_area;
 var selectedCanvas;
 
-var handRadius = 10;
-
 function startGame() {
 	game_area = new gameArea();
 	selectedCanvas = game_area;
@@ -164,13 +162,23 @@ gameArea.prototype.lMouseUp = function(e) {
 }
 
 gameArea.prototype.mousemove = function(e) {
-	player.changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
+	this.player.changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
 }
 
 //------------- Objects for gameArea ---------------\\
 
-function game_object(component) {
-	this.components = [component];
+function game_object(x, y, components) {
+	this.x = x;
+	this.y = y;
+	this.components = components;
+}
+
+game_object.prototype.getX = function () {
+	return this.x;
+}
+
+game_object.prototype.getY = function () {
+	return this.y;
 }
 
 game_object.prototype.update = function () {
@@ -193,22 +201,22 @@ function barrel(x,y) {
 
 //------------- Shapes -----------------------\\
 
-function component(x,y) {
-	this.x = x;
-	this.y = y;
+function component(xOffset = 0, yOffset = 0) {
+	this.xOffset = xOffset;
+	this.yOffset = yOffset;
 }
 
-component.prototype.getX = function () {
-	return this.x;
+component.prototype.getXOffset() {
+	return this.xOffset;
 }
 
-component.prototype.getY = function () {
-	return this.y;
+component.prototype.getYOffset() {
+	return this.yOffset;
 }
 
 shape.prototype = Object.create(component.prototype);
-function shape(x, y, fillColor, lineWidth, stroke = false, strokeColor = "rgb(255,255,255)", angle = 0, rotCenterpoint = [0,0]) {
-	component.call(this,x,y);
+function shape(xOffset, yOffset, fillColor, lineWidth, stroke = false, strokeColor = "rgb(255,255,255)", angle = 0, rotCenterpoint = [0,0]) {
+	component.call(this, xOffset, yOffset);
 	this.fillColor = fillColor;
 	this.lineWidth = lineWidth;
 	this.stroke = stroke;
@@ -218,22 +226,26 @@ function shape(x, y, fillColor, lineWidth, stroke = false, strokeColor = "rgb(25
 }
 
 circle.prototype = Object.create(shape.prototype);
-function circle(x, y, radius, fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = false, strokeColor = null) {
-	shape.call(this, x, y, fillColor, lineWidth, stroke, strokeColor);
+function circle(xOffset, yOffset, radius, fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = false, strokeColor = null) {
+	shape.call(this, xOffset, yOffset, fillColor, lineWidth, stroke, strokeColor);
 	this.radius = radius;
 }
 
-circle.prototype.circleIntersection = function(circle) {
-	return Math.pow((this.x - circle.getX()),2) + Math.pow((this.y - circle.getY()),2) <= Math.pow((this.radius + circle.getRadius()),2);
+circle.prototype.circleIntersection = function(x1,x2,y1,y2,circle) {
+	x1 = x1 + this.xOffset;
+	y1 = y1 + this.yOffset;
+	x2 = x2 + circle.getXOffset();
+	y2 = y2 + circle.getYOffset();
+	return Math.pow((x1 - x2),2) + Math.pow((y1 - y2,2) <= Math.pow((this.radius + circle.getRadius()),2);
 }
 
 circle.prototype.getRadius = function () {
 	return this.radius;
 }
 
-circle.prototype.update = function(ctx) {
+circle.prototype.update = function(x, y, ctx) {
 	ctx.beginPath();
-	ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+	ctx.arc(x + this.xOffset, y + this.yOffset, this.radius, 0, 2 * Math.PI);
 	ctx.lineWidth = this.lineWidth;
 	ctx.fillStyle = this.fillColor;
 	ctx.fill();
@@ -291,10 +303,12 @@ img.prototype.draw = function() {
 
 player.prototype = Object.create(game_object.prototype);
 function player(x, y) {
-	game_object.call(this, new circle(x, y, 30, "rgb(244, 217, 66)"));
-	this.body = this.components[0];
+	this.body = new circle(0, 0, 30, "rgb(244, 217, 66)");
+	this.lHand = new circle(-24, -23, 10, "rgb(244, 217, 66)");
+	this.rHand = new circle(24, -23, 10, "rgb(244, 217, 66)");
+	game_object.call(this, x, y, [this.body, this.lHand, this.rHand]);
 	this.inventory = [];
-	this.weapons = [new fists(x, y, 0)];
+	this.weapons = [new fists(x, y, 0, handsOffset)];
 	this.ammo = [];
 	this.health = 100;
 	this.speed = 15;
@@ -302,8 +316,13 @@ function player(x, y) {
 
 //Draws body and player's weapon
 player.prototype.update = function(ctx) {
+	/*
 	for (var i = 0; i < this.weapons.length; i++) {
 		this.weapons[i].update(ctx);
+	}
+	*/
+	for (var i = 0; i < this.components.length; i++) {
+		this.components[i].update();
 	}
 }
 player.prototype.changeDir = function(angle) {
@@ -357,8 +376,8 @@ player.prototype.getSpeed = function() {
 //------------ item constructor + inheritance --------------\\
 
 item.prototype = Object.create(game_object.prototype);
-function item(x, y, name="item") {
-	game_object.call(this, new circle(x, y, 10, "rgb(244, 217, 66)"));
+function item(x, y, name="item", components) {
+	game_object.call(this, components);
 	this.x = x;
 	this.y = y;
 	this.name = name;
@@ -378,8 +397,8 @@ item.prototype.getName = function () {
 }
 
 weapon.prototype = Object.create(item.prototype);
-function weapon(x, y, damage, name, cooldown, angle = 0, picked = false, lHO = null, rHO = null) {
-	item.call(this,x,y,name);
+function weapon(x, y, damage, name, cooldown, angle = 0, picked = false, lHO = null, rHO = null, components) {
+	item.call(this,x,y,name,components);
 	this.lHO = lHO;
 	this.rHO = rHO;
 	this.damage = damage;
@@ -439,10 +458,10 @@ weapon.prototype.pickup = function() {
 //---------------------- Individual weapons ------------------- \\
 
 fists.prototype = Object.create(weapon.prototype);
-function fists(x, y, angle = 0, picked = true) {
+function fists(lHand, rHand, angle = 0, handOffset, picked = true) {
 	weapon.call(this,x,y,15,"Fists",17,angle,picked,
 	{x : -24, y : -23}, 
-	{x : 24, y : -23} );
+	{x : 24, y : -23});
 	this.lPunch = false;
 	this.rPunch = false;
 	this.hit = false;
