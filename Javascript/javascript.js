@@ -206,11 +206,11 @@ function component(xOffset = 0, yOffset = 0) {
 	this.yOffset = yOffset;
 }
 
-component.prototype.getXOffset() {
+component.prototype.getXOffset = function() {
 	return this.xOffset;
 }
 
-component.prototype.getYOffset() {
+component.prototype.getYOffset = function() {
 	return this.yOffset;
 }
 
@@ -236,7 +236,7 @@ circle.prototype.circleIntersection = function(x1,x2,y1,y2,circle) {
 	y1 = y1 + this.yOffset;
 	x2 = x2 + circle.getXOffset();
 	y2 = y2 + circle.getYOffset();
-	return Math.pow((x1 - x2),2) + Math.pow((y1 - y2,2) <= Math.pow((this.radius + circle.getRadius()),2);
+	return ((Math.pow(x1 - x2),2) + Math.pow(y1 - y2,2)) <= (Math.pow((this.radius + circle.getRadius()),2));
 }
 
 circle.prototype.getRadius = function () {
@@ -308,7 +308,7 @@ function player(x, y) {
 	this.rHand = new circle(24, -23, 10, "rgb(244, 217, 66)");
 	game_object.call(this, x, y, [this.body, this.lHand, this.rHand]);
 	this.inventory = [];
-	this.weapons = [new fists(x, y, 0, handsOffset)];
+	this.weapons = [new fists(lHand, rHand, 0)];
 	this.ammo = [];
 	this.health = 100;
 	this.speed = 15;
@@ -397,14 +397,12 @@ item.prototype.getName = function () {
 }
 
 weapon.prototype = Object.create(item.prototype);
-function weapon(x, y, damage, name, cooldown, angle = 0, picked = false, lHO = null, rHO = null, components) {
+function weapon(lHand, rHand, damage, name, cooldown, angle = 0, components) {
 	item.call(this,x,y,name,components);
-	this.lHO = lHO;
-	this.rHO = rHO;
 	this.damage = damage;
 	this.frameCdLeft = 0;
 	this.frameCd = cooldown;
-	this.picked = picked;
+	this.picked = false;
 	this.wShape = [];
 	this.angle = 0;
 	
@@ -458,10 +456,12 @@ weapon.prototype.pickup = function() {
 //---------------------- Individual weapons ------------------- \\
 
 fists.prototype = Object.create(weapon.prototype);
-function fists(lHand, rHand, angle = 0, handOffset, picked = true) {
-	weapon.call(this,x,y,15,"Fists",17,angle,picked,
-	{x : -24, y : -23}, 
-	{x : 24, y : -23});
+function fists(x, y, angle = 0) {
+	lHand.xOffset = -24;
+	lHand.yOffset = -23;
+	rHand.xOffset = 24;
+	rHand.yOffset = -23;
+	weapon.call(this, x, y, 15, "Fists", 17,angle);
 	this.lPunch = false;
 	this.rPunch = false;
 	this.hit = false;
@@ -513,8 +513,8 @@ fists.prototype.attack = function() {
 
 
 ak47.prototype = Object.create(weapon.prototype);
-function ak47(x, y, angle = 0, picked) {
-	weapon.call(this,x,y,10,"AK-47",4,angle,picked,
+function ak47(x, y, angle = 0) {
+	weapon.call(this,x,y,10,"AK-47",4,angle,
 	{x : -8, y : -50},
 	{x : 0, y : -15} );
 	
@@ -526,8 +526,8 @@ ak47.prototype.attack = function() {
 
 
 um9.prototype = Object.create(weapon.prototype);
-function um9(x, y, angle = 0, picked) {
-	weapon.call(this,x,y,10,"UM9",4,angle,picked,
+function um9(x, y, angle = 0) {
+	weapon.call(this,x,y,10,"UM9",4,angle,
 	{x : -8, y : -50},
 	{x : 0, y : -15} );
 
