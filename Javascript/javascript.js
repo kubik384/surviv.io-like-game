@@ -44,7 +44,7 @@ function gameArea() {
 	this.pickedItem = false;
 	this.attacked = false;
 	this.objects = [new player (200, 200), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
-	this.player = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
+	this.myPlayer = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
 }
 
 gameArea.prototype.clear = function() {
@@ -54,7 +54,7 @@ gameArea.prototype.clear = function() {
 gameArea.prototype.update = function() {
 	this.clear();
 	
-	if (this.player.isAlive()) {
+	if (this.myPlayer.isAlive()) {
 		// Character movement
 		var delta_x = 0;
 		var delta_y = 0;
@@ -70,10 +70,10 @@ gameArea.prototype.update = function() {
 		if (this.pressed['KeyS']) {
 			delta_y += 1;
 		}
-		var pSpeed = this.player.getSpeed();
+		var pSpeed = this.myPlayer.getSpeed();
 		delta_x *= pSpeed;
 		delta_y *= pSpeed;
-		this.player.move(delta_x,delta_y);
+		this.myPlayer.move(delta_x,delta_y);
 		this.moveScreenBy(delta_x,delta_y);
 		if (!this.attacked) {
 			if (this.lMBDown) {
@@ -89,9 +89,9 @@ gameArea.prototype.update = function() {
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed
 		var itemInRange = false; 
 		for(i = 0; i < this.objects.length; i++) {
-			var body = this.player.getBody();
+			var body = this.myPlayer.getBody();
 			if (this.objects[i] instanceof item) {
-				if (this.objects[i].inRange(body.x, body.y)) {
+				if (this.objects[i].inRange(body.getXOffset(), body.getYOffset())) {
 					if (this.pressed['KeyF'] && !this.pickedItem) {
 						// Player picks the weapon
 						if (this.objects[i] instanceof weapon) {
@@ -121,7 +121,7 @@ gameArea.prototype.update = function() {
 			document.getElementById("ui-lower").style.display = "none";
 		}
 		
-		this.player.update(this.context);
+		this.myPlayer.update(this.context);
 	}
 	for(var i = 0; i < this.objects.length; i++) {
 		this.objects[i].update(this.context);
@@ -162,7 +162,7 @@ gameArea.prototype.lMouseUp = function(e) {
 }
 
 gameArea.prototype.mousemove = function(e) {
-	this.player.changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
+	this.myPlayer.changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
 }
 
 //------------- Objects for gameArea ---------------\\
@@ -224,19 +224,26 @@ component.prototype.setXYOffset = function(x,y) {
 	this.yOffset = y;
 }
 
+component.prototype.getXYOffset = function() {
+	return [this.xOffset,this.yOffset];
+}
+
 shape.prototype = Object.create(component.prototype);
-function shape(xOffset, yOffset, fillColor, lineWidth, stroke = false, strokeColor = "rgb(255,255,255)", angle = 0, rotCenterpoint = [0,0]) {
+function shape(xOffset, yOffset, fillColor, lineWidth, stroke = false, strokeColor = "rgb(255,255,255)", angle = 0) {
 	component.call(this, xOffset, yOffset);
 	this.fillColor = fillColor;
 	this.lineWidth = lineWidth;
 	this.stroke = stroke;
 	this.strokeColor = strokeColor;
 	this.angle = angle;
-	this.rotCenterpoint = rotCenterpoint;
+}
+
+shape.prototype.setAngle = function(angle) {
+	this.angle = angle;
 }
 
 circle.prototype = Object.create(shape.prototype);
-function circle(xOffset, yOffset, radius, fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = false, strokeColor = null) {
+function circle(xOffset, yOffset, radius, fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = false, strokeColor = null, rotCenterPoint = 0) {
 	shape.call(this, xOffset, yOffset, fillColor, lineWidth, stroke, strokeColor);
 	this.radius = radius;
 }
@@ -253,7 +260,17 @@ circle.prototype.getRadius = function () {
 	return this.radius;
 }
 
-circle.prototype.update = function(ctx, x, y) {
+circle.prototype.update = function(ctx, x, y, rotCenterPoint = {x:0,y:0}) {
+	if (this.angle != 0) {
+		ctx.save();
+		ctx.translate(rotCenterPoint.x, rotCenterPoint.y);
+		if (this.angle < 0) {
+			ctx.rotate((this.angle + ((Math.abs(this.angle) - 90) * 2)) * Math.PI/180);
+		} else
+		{
+			ctx.rotate((this.angle - ((Math.abs(this.angle) - 90) * 2)) * Math.PI/180);
+		}
+	}
 	ctx.beginPath();
 	ctx.arc(x + this.xOffset, y + this.yOffset, this.radius, 0, 2 * Math.PI);
 	ctx.lineWidth = this.lineWidth;
@@ -262,6 +279,10 @@ circle.prototype.update = function(ctx, x, y) {
 	if (this.stroke) {
 		ctx.strokeStyle = this.strokeColor;
 		ctx.stroke();
+	}
+	if (this.angle != 0) {
+		ctx.translate(-rotCenterPoint.x, -rotCenterPoint.y);
+		ctx.restore();
 	}
 }
 
@@ -272,10 +293,10 @@ function rectangle(xOffset, yOffset, width, height, fillColor, lineWidth, stroke
 	this.height = height;
 }
 
-rectangle.prototype.update = function(ctx, x, y) {
+rectangle.prototype.update = function(ctx, x, y, rotCenterPoint = {x:0,y:0}) {
 	if (this.angle != 0) {
 		ctx.save();
-		ctx.translate(centerpoint.x, centerpoint.y);
+		ctx.translate(rotCenterPoint.x, rotCenterPoint.y);
 		if (this.angle < 0) {
 			ctx.rotate((this.angle + ((Math.abs(this.angle) - 90) * 2)) * Math.PI/180);
 		} else
@@ -333,15 +354,17 @@ player.prototype.update = function(ctx) {
 	}
 	*/
 	for (var i = 0; i < this.components.length; i++) {
-		this.components[i].update(ctx, this.x, this.y);
+		this.components[i].update(ctx, this.x, this.y, {x:this.body.getXOffset() + this.x,y:this.body.getYOffset() + this.y});
 	}
 }
 player.prototype.changeDir = function(angle) {
 	while(this.angle > 360) {
 		this.angle -= 360;
 	}
-	this.weapons[0].changeAngle(angle);
+	this.lHand.setAngle(angle);
+	this.rHand.setAngle(angle);
 	
+	/* Hand rotation without using canvas translate function
 	var radAngle = (this.angle - angle) * (Math.PI / 180);
 	var x = this.lHand.getXOffset() * Math.cos(radAngle) - this.lHand.getYOffset() * Math.sin(radAngle);
 	var y = this.lHand.getYOffset() * Math.cos(radAngle) + this.lHand.getXOffset() * Math.sin(radAngle);
@@ -349,6 +372,7 @@ player.prototype.changeDir = function(angle) {
 	x = this.rHand.getXOffset() * Math.cos(radAngle) - this.rHand.getYOffset() * Math.sin(radAngle);
 	y = this.rHand.getYOffset() * Math.cos(radAngle) + this.rHand.getXOffset() * Math.sin(radAngle);	
 	this.rHand.setXYOffset(x,y);
+	*/
 }
 // Picks weapon and drops his old if he had one
 player.prototype.pickWeapon = function(weapon) {
@@ -370,8 +394,8 @@ player.prototype.pickItem = function(item) {
 }
 // Changes the player's x, y coordinates
 player.prototype.move = function(delta_x, delta_y) {
-	this.body.x += delta_x;
-	this.body.y += delta_y;
+	this.x += delta_x;
+	this.y += delta_y;
 	this.weapons[0].move(this.body.x, this.body.y);
 }
 player.prototype.getBody = function() {
@@ -406,7 +430,7 @@ function item(x, y, components, name = "item") {
 }
 
 item.prototype.update = function(ctx) {
-	this.components[0].update(ctx);
+	this.components[0].update(ctx,this.x,this.y);
 }
 // Checks if the passed x,y values are in range of the item (to be picked up)
 item.prototype.inRange = function(x,y) {
@@ -425,8 +449,6 @@ function weapon(x, y, damage, components, cooldown, angle = 0, name) {
 	this.frameCdLeft = 0;
 	this.frameCd = cooldown;
 	this.picked = false;
-	this.angle = 0;
-	this.changeAngle(angle);
 }
 
 weapon.prototype.update = function (ctx) {
@@ -436,9 +458,6 @@ weapon.prototype.update = function (ctx) {
 	this.components.update(ctx, this.x, this.y);
 }
 
-weapon.prototype.changeAngle = function (angle) {
-	this.angle = angle;
-}
 weapon.prototype.tryCd = function () {
 	if (this.frameCdLeft == 0) {
 		this.frameCdLeft = this.frameCd;
