@@ -26,7 +26,7 @@ window.addEventListener('mouseup', function(e) {
 	}
 })
 window.addEventListener('mousemove', function(e) {
-	selectedCanvas.mousemove(e);
+	selectedCanvas.mouseMove(e);
 })
 
 //---------------------- gameArea --------------------------\\
@@ -40,10 +40,9 @@ function gameArea() {
 	document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 	this.interval = setInterval(this.update.bind(this), 20);
 	this.context = this.canvas.getContext("2d");
+	this.inRangeItemIndex = -1;
 	this.pressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'KeyF':false, 'lMBDown':false};
-	this.pickedItem = false;
-	this.attacked = false;
-	this.objects = [new player (200, 200), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
+	this.objects = [new player (200, 200), new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
 	this.myPlayer = new player(Math.floor(this.canvas.width/2), Math.floor(this.canvas.height/2));
 }
 
@@ -75,55 +74,31 @@ gameArea.prototype.update = function() {
 		delta_y *= pSpeed;
 		this.myPlayer.move(delta_x,delta_y);
 		this.moveScreenBy(delta_x,delta_y);
-		if (!this.attacked) {
-			if (this.lMBDown) {
-				this.player.attack();
-				this.attacked = true;
-			}
-		} else {
-			if (!this.lMBDown) {
-				this.attacked = false;
-			}
+		
+		if (this.lMBDown) {
+			this.myPlayer.attack();
 		}
 		
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed
-		var itemInRange = false; 
+		this.inRangeItemIndex = -1;
 		for(i = 0; i < this.objects.length; i++) {
-			var body = this.myPlayer.getBody();
 			if (this.objects[i] instanceof item) {
-				if (this.objects[i].inRange(body.getXOffset(), body.getYOffset())) {
-					if (this.pressed['KeyF'] && !this.pickedItem) {
-						// Player picks the weapon
-						if (this.objects[i] instanceof weapon) {
-							var droppedweapon = this.player.pickWeapon(this.objects.splice(i,1)[0]);
-							this.objects.push(droppedweapon);
-						// Puts the item into the player's inventory
-						} else {
-							var itemPick = this.objects.splice(i,1)[0];
-							this.player.pickItem(itemPick);
-						}
-						this.pickedItem = true;
-					} else {
-						if (!this.pressed['KeyF'] && this.pickedItem) {
-							this.pickedItem = false;
-						}
-						document.getElementById("pick-item").innerHTML = this.objects[i].getName();
-						document.getElementById("ui-lower").style.display = "block";
-						itemInRange = true;
-					}
-				break;
+				if (this.objects[i].inRange(this.myPlayer.getX(), this.myPlayer.getY())) {
+					document.getElementById("pick-item").innerHTML = this.objects[i].getName();
+					document.getElementById("ui-lower").style.display = "block";
+					this.inRangeItemIndex = i;
+					break;
 				}
 			}
 		}
-		if (itemInRange) {
+		if (this.inRangeItemIndex != -1) {
 			document.getElementById("ui-lower").style.display = "block";
 		} else if (document.getElementById("ui-lower").style.display == "block") {
 			document.getElementById("ui-lower").style.display = "none";
 		}
-		
 		this.myPlayer.update(this.context);
 	}
-	for(var i = 0; i < this.objects.length; i++) {
+	for (var i = 0; i < this.objects.length; i++) {
 		this.objects[i].update(this.context);
 	}
 }
@@ -153,6 +128,14 @@ gameArea.prototype.keyUp = function(e) {
 }
 gameArea.prototype.keyDown = function(e) {
 	this.pressed[e.code] = true;
+	if (e.code === 'KeyF' && this.inRangeItemIndex != -1) {
+		if (this.objects[this.inRangeItemIndex] instanceof weapon) {
+			this.myPlayer.pickWeapon(this.objects.splice(this.inRangeItemIndex,1)[0]);
+		} else {
+			var itemPick = this.objects.splice(this.inRangeItemIndex,1)[0];
+			this.myPlayer.pickItem(itemPick);
+		}
+	}
 }
 gameArea.prototype.lMouseDown = function(e) {
 	this.pressed['lMBDown'] = true;
@@ -161,8 +144,8 @@ gameArea.prototype.lMouseUp = function(e) {
 	this.pressed['lMBDown'] = false;
 }
 
-gameArea.prototype.mousemove = function(e) {
-	this.myPlayer.changeDir(Math.atan2(Math.floor(game_area.canvas.width/2) - e.pageX, Math.floor(game_area.canvas.height/2) - e.pageY) * (180 / Math.PI));
+gameArea.prototype.mouseMove = function(e) {
+	this.myPlayer.changeDir(Math.atan2(Math.floor((game_area.canvas.width + this.myPlayer.getBody().getXOffset())/2) - e.pageX, Math.floor((game_area.canvas.height + this.myPlayer.getBody().getYOffset())/2) - e.pageY) * (180 / Math.PI));
 }
 
 //------------- Objects for gameArea ---------------\\
@@ -266,10 +249,10 @@ circle.prototype.update = function(ctx, x, y, rotCenterPoint = {x:0,y:0}) {
 		ctx.translate(rotCenterPoint.x, rotCenterPoint.y);
 		if (this.angle < 0) {
 			ctx.rotate((this.angle + ((Math.abs(this.angle) - 90) * 2)) * Math.PI/180);
-		} else
-		{
+		} else {
 			ctx.rotate((this.angle - ((Math.abs(this.angle) - 90) * 2)) * Math.PI/180);
 		}
+		ctx.translate(-rotCenterPoint.x, -rotCenterPoint.y);
 	}
 	ctx.beginPath();
 	ctx.arc(x + this.xOffset, y + this.yOffset, this.radius, 0, 2 * Math.PI);
@@ -281,7 +264,6 @@ circle.prototype.update = function(ctx, x, y, rotCenterPoint = {x:0,y:0}) {
 		ctx.stroke();
 	}
 	if (this.angle != 0) {
-		ctx.translate(-rotCenterPoint.x, -rotCenterPoint.y);
 		ctx.restore();
 	}
 }
@@ -343,7 +325,7 @@ function player(x, y) {
 	this.weapons = [new ak47(x,y)];
 	this.ammo = [];
 	this.health = 100;
-	this.speed = 15;
+	this.speed = 10;
 }
 
 //Draws body and player's weapon
@@ -358,11 +340,8 @@ player.prototype.update = function(ctx) {
 	}
 }
 player.prototype.changeDir = function(angle) {
-	while(this.angle > 360) {
-		this.angle -= 360;
-	}
-	this.lHand.setAngle(angle);
-	this.rHand.setAngle(angle);
+	this.lHand.setAngle(angle - 180);
+	this.rHand.setAngle(angle - 180);
 	
 	/* Hand rotation without using canvas translate function
 	var radAngle = (this.angle - angle) * (Math.PI / 180);
@@ -376,13 +355,10 @@ player.prototype.changeDir = function(angle) {
 }
 // Picks weapon and drops his old if he had one
 player.prototype.pickWeapon = function(weapon) {
-	var droppedWeapon = this.weapons[0];
-	droppedWeapon.drop();
-	weapon.move(this.body.x, this.body.y);
-	weapon.pickup();
+	weapon.setXY(this.body.x, this.body.y);
+	weapon.pickUp(this.lHand, this.rHand);
 	this.weapons[0] = weapon;
 	document.getElementById("ui-weapon").innerHTML = weapon.getName();
-	return droppedWeapon;
 }
 // Puts passed item into player's inventory
 player.prototype.pickItem = function(item) {
@@ -396,14 +372,18 @@ player.prototype.pickItem = function(item) {
 player.prototype.move = function(delta_x, delta_y) {
 	this.x += delta_x;
 	this.y += delta_y;
-	this.weapons[0].move(this.body.x, this.body.y);
+	//if (this.weapons[0] !== null) {
+	//	this.weapons[0].setXY(this.body.x, this.body.y);
+	//}
 }
 player.prototype.getBody = function() {
 	return this.body;
 }
 
 player.prototype.attack = function() {
-	this.weapons[0].attack();
+	if (this.weapons[0] !== null) {
+		this.weapons[0].attack();
+	}
 }
 
 player.prototype.takeDamage = function(damage) {
@@ -448,14 +428,18 @@ function weapon(x, y, damage, components, cooldown, angle = 0, name) {
 	this.damage = damage;
 	this.frameCdLeft = 0;
 	this.frameCd = cooldown;
-	this.picked = false;
+	this.ownerBody = null;
 }
 
 weapon.prototype.update = function (ctx) {
 	//for (var i = 0; i < this.wShape.length; i++) {
 		//drawRect(ctx, this.x + this.wShape[i].x, this.y + this.wShape[i].y, this.wShape[i].width, this.wShape[i].height, this.wShape[i].fillColor, this.angle, {x : this.x, y : this.y}, this.wShape[i].stroke, this.wShape[i].strokeColor, this.wShape[i].lineWidth);
 	//}
-	this.components.update(ctx, this.x, this.y);
+	if (ownerBody === null) {
+		this.components.update(ctx, this.x, this.y);
+	} else {
+		this.components.update(ctx, this.ownerBody.getX(), this.ownerBody.getY());
+	}
 }
 
 weapon.prototype.tryCd = function () {
@@ -466,7 +450,7 @@ weapon.prototype.tryCd = function () {
 	return false;
 }
 
-weapon.prototype.move = function(x,y) {
+weapon.prototype.setXY = function(x,y) {
 	this.x = x;
 	this.y = y;
 }
@@ -475,10 +459,9 @@ weapon.prototype.drop = function() {
 	this.picked = true;
 }
 
-weapon.prototype.pickup = function(lHand, rHand, lhX, lhY, rhX, rhY, ) {
+weapon.prototype.pickUp = function(lHand, rHand, lhX, lhY, rhX, rhY) {
 	lHand.setXYOffset(lhX, lhY);
 	rHand.setXYOffset(rhX, rhY);
-	this.picked = false;
 }
 
 //---------------------- Individual weapons ------------------- \\
@@ -551,7 +534,7 @@ ak47.prototype.attack = function() {
 }
 
 ak47.prototype.pickUp = function(lHand, rHand) {
-	weapon.pickUp.call(this, lHand, rHand, 8, -50, 0, -15);
+	weapon.prototype.pickUp.call(this, lHand, rHand, 8, -50, 0, -15);
 }
 
 um9.prototype = Object.create(weapon.prototype);
@@ -563,7 +546,7 @@ um9.prototype.attack = function() {
 }
 
 um9.prototype.pickUp = function (lHand, rHand) {
-	weapon.pickUp.call(this, lHand, rHand, 8, -50, 0, -15);
+	weapon.prototype.pickUp.call(this, lHand, rHand, 8, -50, 0, -15);
 }
 
 
