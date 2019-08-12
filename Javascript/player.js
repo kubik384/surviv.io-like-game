@@ -1,11 +1,11 @@
 "use strict";
 
-player.prototype = Object.create(game_object.prototype);
+player.prototype = Object.create(gameObject.prototype);
 function player(x, y) {
 	this.body = new circle(0, 0, 30, "rgb(244, 217, 66)");
 	this.lHand = new circle(-24, -23, 10, "rgb(244, 217, 66)");
 	this.rHand = new circle(24, -23, 10, "rgb(244, 217, 66)");
-	game_object.call(this, x, y, [this.body, this.lHand, this.rHand]);
+	gameObject.call(this, x, y, [this.body, this.lHand, this.rHand]);
 	this.inventory = [];
 	this.weapons = [new ak47(x,y)];
 	this.weapons[0].pickUp(this, this.lHand, this.rHand);
@@ -31,16 +31,6 @@ player.prototype.changeDir = function(angle) {
 		this.weapons[i].setAngle(angle);
 	}
 	this.dir = angle;
-	
-	/* Hand rotation without using canvas translate function
-	var radAngle = (this.angle - angle) * (Math.PI / 180);
-	var x = this.lHand.getXOffset() * Math.cos(radAngle) - this.lHand.getYOffset() * Math.sin(radAngle);
-	var y = this.lHand.getYOffset() * Math.cos(radAngle) + this.lHand.getXOffset() * Math.sin(radAngle);
-	this.lHand.setXYOffset(x,y);
-	x = this.rHand.getXOffset() * Math.cos(radAngle) - this.rHand.getYOffset() * Math.sin(radAngle);
-	y = this.rHand.getYOffset() * Math.cos(radAngle) + this.rHand.getXOffset() * Math.sin(radAngle);	
-	this.rHand.setXYOffset(x,y);
-	*/
 }
 // Picks weapon and drops his old if he had one
 player.prototype.pickWeapon = function(weapon) {

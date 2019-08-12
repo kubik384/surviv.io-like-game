@@ -12,8 +12,10 @@ function gameArea() {
 	this.inRangeItemIndex = -1;
 	this.pickItem = false;
 	this.pressed = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'KeyF':false, 'lMBDown':false};
-	this.objects = [new player (200, 200), new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
-	this.myPlayer = new player(this.canvas.width/2,this.canvas.height/2);
+	this.players = [new player(this.canvas.width/2,this.canvas.height/2), new player (200, 200)]
+	this.bullets = []
+	this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)]
+	this.myPlayer = this.players[0];
 }
 
 gameArea.prototype.clear = function() {
@@ -24,10 +26,10 @@ gameArea.prototype.update = function() {
 	this.clear();
 	
 	if (this.pickItem) {
-		if (this.objects[this.inRangeItemIndex] instanceof weapon) {
-			this.myPlayer.pickWeapon(this.objects.splice(this.inRangeItemIndex,1)[0]);
+		if (this.items[this.inRangeItemIndex] instanceof weapon) {
+			this.myPlayer.pickWeapon(this.items.splice(this.inRangeItemIndex,1)[0]);
 		} else {
-			var itemPick = this.objects.splice(this.inRangeItemIndex,1)[0];
+			var itemPick = this.items.splice(this.inRangeItemIndex,1)[0];
 			this.myPlayer.pickItem(itemPick);
 		}
 		this.pickItem = false;
@@ -61,10 +63,10 @@ gameArea.prototype.update = function() {
 		
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed
 		this.inRangeItemIndex = -1;
-		for(i = 0; i < this.objects.length; i++) {
-			if (this.objects[i] instanceof item) {	
-				if (this.objects[i].inRange(this.myPlayer.getX(), this.myPlayer.getY())) {
-					document.getElementById("pick-item").innerHTML = this.objects[i].getName();
+		for(i = 0; i < this.items.length; i++) {
+			if (this.items[i] instanceof item) {	
+				if (this.items[i].inRange(this.myPlayer.getX(), this.myPlayer.getY())) {
+					document.getElementById("pick-item").innerHTML = this.items[i].getName();
 					document.getElementById("ui-lower").style.display = "block";
 					this.inRangeItemIndex = i;
 					break;
@@ -76,10 +78,24 @@ gameArea.prototype.update = function() {
 		} else if (document.getElementById("ui-lower").style.display == "block") {
 			document.getElementById("ui-lower").style.display = "none";
 		}
-		this.myPlayer.update(this.context);
 	}
-	for (var i = 0; i < this.objects.length; i++) {
-		this.objects[i].update(this.context);
+	
+	for (var i = 0; i < this.players.length; i++) {
+		if (this.players[i].isAlive()) {
+			this.players[i].update(this.context);
+		} else {
+			this.players.splice(i,1);
+		}
+	}
+	for (var i = 0; i < this.items.length; i++) {
+		this.items[i].update(this.context);
+	}
+	for (var i = 0; i < this.bullets.length; i++) {
+		if (!this.bullets[i].hasExpired) {
+			this.bullets[i].update(this.context);
+		} else {
+			this.bullets.splice(i,1);
+		}
 	}
 }
 

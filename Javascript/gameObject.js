@@ -1,38 +1,38 @@
 "use strict";
 
-function game_object(x, y, components) {
+function gameObject(x, y, components) {
 	this.x = x;
 	this.y = y;
 	this.components = components;
 }
 
-game_object.prototype.getX = function () {
+gameObject.prototype.getX = function () {
 	return this.x;
 }
 
-game_object.prototype.getY = function () {
+gameObject.prototype.getY = function () {
 	return this.y;
 }
 
-game_object.prototype.setXY = function (x,y) {
+gameObject.prototype.setXY = function (x,y) {
 	this.x = x;
 	this.y = y;
 }
 
-game_object.prototype.update = function () {
+gameObject.prototype.update = function () {
 	//-- Virtual function --//
 }
 
-bloodstain.prototype = Object.create(game_object.prototype);
+bloodstain.prototype = Object.create(gameObject.prototype);
 function bloodstain(x,y) {
-	game_object.call(new img());
+	gameObject.call(new img());
 }
 
-tree.prototype = Object.create(game_object.prototype);
+tree.prototype = Object.create(gameObject.prototype);
 function tree(x,y) {
-	game_object.call(new circle(200, 200, Math.floor((Math.random()*10 + 10)), fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = true, strokeColor = "rgb(139,69,19)"));
+	gameObject.call(new circle(200, 200, Math.floor((Math.random()*10 + 10)), fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = true, strokeColor = "rgb(139,69,19)"));
 }
 
-barrel.prototype = Object.create(game_object.prototype);
+barrel.prototype = Object.create(gameObject.prototype);
 function barrel(x,y) {
 }
