@@ -56,10 +56,18 @@ player.prototype.getBody = function() {
 	return this.body;
 }
 
-player.prototype.attack = function() {
+player.prototype.useWeapon = function() {
 	if (this.weapons[0] !== null) {
-		this.weapons[0].attack();
+		return this.weapons[0].use();
 	}
+	return null;
+}
+
+player.prototype.isWeaponReady = function() {
+	if (this.weapons[0] !== null) {
+		return this.weapons[0].isReady();
+	}
+	return false;
 }
 
 player.prototype.takeDamage = function(damage) {

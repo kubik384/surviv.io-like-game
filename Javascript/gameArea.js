@@ -57,20 +57,21 @@ gameArea.prototype.update = function() {
 		this.myPlayer.move(delta_x,delta_y);
 		this.moveScreenBy(delta_x,delta_y);
 		
-		if (this.lMBDown) {
-			this.myPlayer.attack();
+		if (this.pressed['lMBDown'] && this.myPlayer.isWeaponReady()) {
+			var bullet = this.myPlayer.useWeapon();
+			if (bullet !== null) {
+				this.bullets[this.bullets.length] = bullet;
+			}
 		}
 		
 		// Shows pickup ui if near any item and pick it up if 'F' is pressed
 		this.inRangeItemIndex = -1;
-		for(i = 0; i < this.items.length; i++) {
-			if (this.items[i] instanceof item) {	
-				if (this.items[i].inRange(this.myPlayer.getX(), this.myPlayer.getY())) {
-					document.getElementById("pick-item").innerHTML = this.items[i].getName();
-					document.getElementById("ui-lower").style.display = "block";
-					this.inRangeItemIndex = i;
-					break;
-				}
+		for(i = 0; i < this.items.length; i++) {	
+			if (this.items[i].inRange(this.myPlayer.getX(), this.myPlayer.getY())) {
+				document.getElementById("pick-item").innerHTML = this.items[i].getName();
+				document.getElementById("ui-lower").style.display = "block";
+				this.inRangeItemIndex = i;
+				break;
 			}
 		}
 		if (this.inRangeItemIndex != -1) {
@@ -91,7 +92,7 @@ gameArea.prototype.update = function() {
 		this.items[i].update(this.context);
 	}
 	for (var i = 0; i < this.bullets.length; i++) {
-		if (!this.bullets[i].hasExpired) {
+		if (!this.bullets[i].hasExpired()) {
 			this.bullets[i].update(this.context);
 		} else {
 			this.bullets.splice(i,1);

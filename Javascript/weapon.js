@@ -21,14 +21,9 @@ weapon.prototype.update = function (ctx) {
 			this.components[i].update(ctx, this.owner.getX(), this.owner.getY(), {x:this.owner.getX(), y:this.owner.getY()});
 		}
 	}
-}
-
-weapon.prototype.ready = function () {
-	if (this.frameCdLeft == 0) {
-		this.frameCdLeft = this.frameCd;
-		return true;
+	if (!this.isReady()) {
+		this.frameCdLeft -= 1;
 	}
-	return false;
 }
 
 weapon.prototype.setXY = function(x,y) {
@@ -55,6 +50,10 @@ weapon.prototype.setAngle = function(angle) {
 	this.dir = angle;
 }
 
+weapon.prototype.isReady = function() {
+	return this.frameCdLeft < 1;
+}
+
 /*
 fists.prototype = Object.create(weapon.prototype);
 function fists(lHand, rHand, angle = 0) {
@@ -76,7 +75,12 @@ function ak47(x, y, angle = 0) {
 }
 
 ak47.prototype.use = function() {
-	this.return (new bullet(this.owner.getX(), this.owner.getY(), this.dir, 20, this.damage, 1, 6, [new circle(0, 0, 30, "rgb(244, 217, 66)")]));
+	if (this.isReady()) {
+		this.frameCdLeft += this.frameCd;
+		return (new bullet(this.owner.getX(), this.owner.getY(), this.dir, 20, this.damage, 1, 8000, [new circle(0, 0, 30, "rgb(244, 217, 66)")]));
+	} else {
+		return null;
+	}
 }
 
 ak47.prototype.pickUp = function(body, lHand = null, rHand = null, angle = 0) {
@@ -105,12 +109,13 @@ function bullet(x, y, dir, speed, dmg, slowdown, lifetime, components) {
 	this.lifetime = lifetime;
 }
 
-bullet.prototype.update = function() {
-	this.setXY(this.x + this.vector[0] * speed, this.y + this.vector[1] * speed);
-	this.speed -= slowdown;
+bullet.prototype.update = function(ctx) {
+	this.setXY(this.x + this.vector[0] * this.speed, this.y + this.vector[1] * this.speed);
+	this.speed -= this.slowdown;
 	this.lifetime -= 1;
+	gameObject.prototype.update.call(this, ctx);
 }
 
 bullet.prototype.hasExpired = function () {
-	return (this.lifetime > 0);
+	return (this.lifetime < 1);
 }

@@ -19,8 +19,10 @@ gameObject.prototype.setXY = function (x,y) {
 	this.y = y;
 }
 
-gameObject.prototype.update = function () {
-	//-- Virtual function --//
+gameObject.prototype.update = function (ctx) {
+	for (var i = 0; i < this.components.length; i++) {
+		this.components[i].update(ctx, this.x, this.y);
+	}		
 }
 
 bloodstain.prototype = Object.create(gameObject.prototype);
