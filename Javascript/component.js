@@ -116,6 +116,14 @@ rectangle.prototype.update = function(ctx, x, y, rotCenterPoint = {x:0,y:0}) {
 	}
 }
 
+rectangle.prototype.getWidth = function() {
+	return this.width;
+}
+
+rectangle.prototype.getHeight = function() {
+	return this.height;
+}
+
 img.prototype = Object.create(shape.prototype);
 function img() {
 	

@@ -78,7 +78,8 @@ function ak47(x, y, angle = 0) {
 ak47.prototype.use = function() {
 	if (this.isReady()) {
 		this.frameCdLeft += this.frameCd;
-		return (new bullet(this.owner.getX(), this.owner.getY(), this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7, "black")]));
+		var bulletCoords = rotate(this.owner.getX(), this.owner.getY(), Math.floor(this.components[0].getWidth()/2) + this.owner.getX(), this.components[0].getHeight() + this.owner.getY(), this.dir - 180);
+		return (new bullet(bulletCoords.x, bulletCoords.y, this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7, "black")]));
 	} else {
 		return null;
 	}

@@ -87,5 +87,5 @@ player.prototype.getAngle = function() {
 }
 
 player.prototype.isHit = function(bullet) {
-	return this.body.isIntersectingCircle(this.x, this.y, bullet.getX(), bullet.getY(), bullet.getComponent());
+	return this.body.isIntersectingCircle(this.x, bullet.getX(), this.y, bullet.getY(), bullet.getComponent());
 }
