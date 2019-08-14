@@ -1,9 +1,10 @@
 "use strict";
 
 weapon.prototype = Object.create(item.prototype);
-function weapon(x, y, damage, components, cooldown, angle = 0, name) {
-	item.call(this,x,y,name,components);
+function weapon(x, y, damage, recoil, cooldown, angle, name, components) {
+	item.call(this,x,y,components,name);
 	this.damage = damage;
+	this.recoil = recoil;
 	this.frameCdLeft = 0;
 	this.frameCd = cooldown;
 	this.owner = null;
@@ -71,13 +72,13 @@ function fists(lHand, rHand, angle = 0) {
 
 ak47.prototype = Object.create(weapon.prototype);
 function ak47(x, y, angle = 0) {
-	weapon.call(this,x,y,10,"AK-47",4,angle, [new rectangle(-6,-20,12,-60,"black",1,true,"black",angle)]);
+	weapon.call(this,x,y,10,5,6,angle,"AK-47",[new rectangle(-6,-20,12,-60,"black",1,true,"black",angle)]);
 }
 
 ak47.prototype.use = function() {
 	if (this.isReady()) {
 		this.frameCdLeft += this.frameCd;
-		return (new bullet(this.owner.getX(), this.owner.getY(), this.dir, 20, this.damage, 1, 8000, [new circle(0, 0, 30, "rgb(244, 217, 66)")]));
+		return (new bullet(this.owner.getX(), this.owner.getY(), this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30, [new circle(0, 0, 7, "black")]));
 	} else {
 		return null;
 	}
@@ -89,7 +90,7 @@ ak47.prototype.pickUp = function(body, lHand = null, rHand = null, angle = 0) {
 
 um9.prototype = Object.create(weapon.prototype);
 function um9(x, y, angle = 0) {
-	weapon.call(this,x,y,10,"UM9",4,angle, [new rectangle(-8,-20,16,-60,"black",1,true,"black",angle)]);
+	weapon.call(this,x,y,10,6,5,angle,"UM9",[new rectangle(-8,-20,16,-60,"black",1,true,"black",angle)]);
 }
 
 um9.prototype.use = function() {
@@ -104,14 +105,14 @@ bullet.prototype = Object.create(gameObject.prototype);
 function bullet(x, y, dir, speed, dmg, slowdown, lifetime, components) {
 	gameObject.call(this,x,y,components);
 	this.speed = speed
-	this.vector = [dir * Math.PI/180, dir * Math.PI/180];
+	this.vector = vecFromAngle(dir);
 	this.slowdown = slowdown;
 	this.lifetime = lifetime;
 }
 
 bullet.prototype.update = function(ctx) {
-	this.setXY(this.x + this.vector[0] * this.speed, this.y + this.vector[1] * this.speed);
-	this.speed -= this.slowdown;
+	this.setXY(this.x + this.vector.x * this.speed, this.y + this.vector.y * this.speed);
+	this.speed /= this.slowdown;
 	this.lifetime -= 1;
 	gameObject.prototype.update.call(this, ctx);
 }

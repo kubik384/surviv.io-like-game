@@ -136,5 +136,5 @@ gameArea.prototype.lMouseUp = function(e) {
 }
 
 gameArea.prototype.mouseMove = function(e) {
-	this.myPlayer.changeDir(Math.atan2(this.myPlayer.getX() + this.myPlayer.getBody().getXOffset() - this.xOffset - e.pageX, this.myPlayer.getY() + this.myPlayer.getBody().getYOffset() - this.yOffset - e.pageY) * (180 / Math.PI));
+this.myPlayer.changeDir(angleFromVec({x:this.myPlayer.getX() + this.myPlayer.getBody().getXOffset(), y:this.myPlayer.getY() + this.myPlayer.getBody().getYOffset()}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY}));
 }
