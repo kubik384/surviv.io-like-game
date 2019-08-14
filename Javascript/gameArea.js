@@ -94,6 +94,12 @@ gameArea.prototype.update = function() {
 	for (var i = 0; i < this.bullets.length; i++) {
 		if (!this.bullets[i].hasExpired()) {
 			this.bullets[i].update(this.context);
+			for (var j = 0; j < this.players.length; j++) {
+				if (this.players[j].isHit(this.bullets[i])){
+					this.players[j].takeDamage(this.bullets[i].getDamage());
+					this.bullets.splice(i,1);
+				}
+			}
 		} else {
 			this.bullets.splice(i,1);
 		}
@@ -101,7 +107,7 @@ gameArea.prototype.update = function() {
 }
 
 //Change fists to create a "zone" between both fists and check for intersection instead
-gameArea.prototype.checkPlayerHit = function(fist, damage) {
+gameArea.prototype.checkPlayerHit = function(bullet) {
 	var pBody = this.player.getBody();
 	for (var i = 1; i < this.players.length; i++) {
 		if (circleCircleIntersection(fist.x + pBody.x, fist.y + pBody.y, handRadius, pBody.x, pBody.y, pBody.r)) {

@@ -85,3 +85,7 @@ player.prototype.getSpeed = function() {
 player.prototype.getAngle = function() {
 	return this.dir;
 }
+
+player.prototype.isHit = function(bullet) {
+	return this.body.isIntersectingCircle(this.x, this.y, bullet.getX(), bullet.getY(), bullet.getComponent());
+}

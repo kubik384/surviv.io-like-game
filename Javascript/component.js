@@ -43,6 +43,10 @@ function circle(xOffset, yOffset, radius, fillColor = "rgb(255,255,255)", lineWi
 }
 
 circle.prototype.circleIntersection = function(x1,x2,y1,y2,circle) {
+
+}
+
+circle.prototype.isIntersectingCircle = function(x1,x2,y1,y2,circle) {
 	x1 = x1 + this.xOffset;
 	y1 = y1 + this.yOffset;
 	x2 = x2 + circle.getXOffset();
