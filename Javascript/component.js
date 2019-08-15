@@ -51,7 +51,7 @@ circle.prototype.isIntersectingCircle = function(x1,x2,y1,y2,circle) {
 	y1 = y1 + this.yOffset;
 	x2 = x2 + circle.getXOffset();
 	y2 = y2 + circle.getYOffset();
-	return ((Math.pow(x1 - x2),2) + Math.pow(y1 - y2,2)) <= (Math.pow((this.radius + circle.getRadius()),2));
+	return ((Math.pow(x1 - x2,2) + Math.pow(y1 - y2,2)) < (Math.pow((this.radius + circle.getRadius()),2)));
 }
 
 circle.prototype.getRadius = function () {

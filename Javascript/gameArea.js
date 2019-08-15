@@ -98,6 +98,7 @@ gameArea.prototype.update = function() {
 				if (this.players[j].isHit(this.bullets[i])){
 					this.players[j].takeDamage(this.bullets[i].getDamage());
 					this.bullets.splice(i,1);
+					break;
 				}
 			}
 		} else {
