@@ -123,12 +123,3 @@ rectangle.prototype.getWidth = function() {
 rectangle.prototype.getHeight = function() {
 	return this.height;
 }
-
-img.prototype = Object.create(shape.prototype);
-function img() {
-	
-}
-
-img.prototype.draw = function() {
-	ctx.drawImage(img, x, y);
-}

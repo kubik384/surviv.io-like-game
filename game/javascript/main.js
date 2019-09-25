@@ -1,18 +1,18 @@
 "use strict";
 
 var socket = io();
-var game_area;
 var selectedCanvas;
 
 function startGame() {
-	game_area = new gameArea();
-	selectedCanvas = game_area;
+	selectedCanvas = new gameArea();
 }
 
 // --- Events listeners --- //
 socket.on('message', function(data) {
 	console.log(data);
 });
+socket.on('game_update', selectedCanvas.updateGame(players,bullets,items));
+
 window.addEventListener('keydown', function(e) {
 	selectedCanvas.keyDown(e);
 });

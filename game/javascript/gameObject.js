@@ -38,3 +38,12 @@ function tree(x,y) {
 barrel.prototype = Object.create(gameObject.prototype);
 function barrel(x,y) {
 }
+
+img.prototype = Object.create(shape.prototype);
+function img() {
+	
+}
+
+img.prototype.draw = function() {
+	ctx.drawImage(img, x, y);
+}

@@ -1,13 +1,13 @@
 {
-  "name": "javascript",
+  "name": "surviv.io-clone",
   "version": "1.0.0",
   "description": "",
-  "main": "main.js",
+  "main": "server_main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "John Borlen",
+  "license": "GNU",
   "dependencies": {
     "express": "^4.17.1",
     "formidable": "^1.2.1",
