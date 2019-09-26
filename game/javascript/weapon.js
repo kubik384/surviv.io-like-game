@@ -101,32 +101,3 @@ um9.prototype.use = function() {
 um9.prototype.pickUp = function (body, lHand = null, rHand = null, angle = 0) {
 	weapon.prototype.pickUp.call(this, lHand, rHand, 8, -50, 0, -15, body, angle);
 }
-
-bullet.prototype = Object.create(gameObject.prototype);
-function bullet(x, y, dir, speed, dmg, slowdown, lifetime, components) {
-	gameObject.call(this,x,y,components);
-	this.dmg = dmg;
-	this.speed = speed
-	this.vector = vecFromAngle(dir);
-	this.slowdown = slowdown;
-	this.lifetime = lifetime;
-}
-
-bullet.prototype.update = function(ctx) {
-	this.setXY(this.x + this.vector.x * this.speed, this.y + this.vector.y * this.speed);
-	this.speed /= this.slowdown;
-	this.lifetime -= 1;
-	gameObject.prototype.update.call(this, ctx);
-}
-
-bullet.prototype.hasExpired = function () {
-	return (this.lifetime < 1);
-}
-
-bullet.prototype.getDamage = function() {
-	return this.dmg;
-}
-
-bullet.prototype.getComponent = function() {
-	return this.components[0];
-}
