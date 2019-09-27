@@ -5,19 +5,18 @@ var selectedCanvas;
 
 function startGame() {
 	selectedCanvas = new gameArea();
-	socket.emit('new_player');
+	socket.on('message', function(data) {
+		console.log(data);
+	});
+	
+	socket.on('game_update', function() {
+		console.log('Updating game state');
+	});
+	
+	socket.on('created_character', selectedCanvas.addCharacter);
 }
 
 // --- Events listeners --- //
-
-socket.on('message', function(data) {
-	console.log(data);
-});
-socket.on('game_update', function() {
-	console.log('Updating game state');
-});
-
-//selectedCanvas.updateGame(players,bullets,items));
 
 window.addEventListener('keydown', function(e) {
 	selectedCanvas.keyDown(e);

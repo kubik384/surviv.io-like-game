@@ -8,8 +8,8 @@ function item(x, y, components, name = "item") {
 	this.name = name;
 }
 
-item.prototype.update = function(ctx) {
-	this.components[0].update(ctx,this.x,this.y);
+item.prototype.draw = function(ctx) {
+	this.components[0].draw(ctx,this.x,this.y);
 }
 // Checks if the passed x,y values are in range of the item (to be picked up)
 item.prototype.inRange = function(x,y) {
