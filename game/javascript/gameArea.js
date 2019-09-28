@@ -55,7 +55,7 @@ class gameArea{
 			if (this.pressed['KeyS']) {
 				delta_y += 1;
 			}
-			var pSpeed = this.myCharacter.getSpeed();
+			var pSpeed = this.myCharacter.speed;
 			delta_x *= pSpeed;
 			delta_y *= pSpeed;
 			this.myCharacter.move(delta_x,delta_y);
@@ -74,8 +74,8 @@ class gameArea{
 			// Shows pickup ui if near any item and pick it up if 'F' is pressed
 			this.inRangeItemIndex = -1;
 			for(i = 0; i < this.items.length; i++) {	
-				if (this.items[i].inRange(this.myCharacter.getX(), this.myCharacter.getY())) {
-					document.getElementById("pick-item").innerHTML = this.items[i].getName();
+				if (this.items[i].inRange(this.myCharacter.x, this.myCharacter.y)) {
+					document.getElementById("pick-item").innerHTML = this.items[i].name;
 					document.getElementById("ui-lower").style.display = "block";
 					this.inRangeItemIndex = i;
 					break;
@@ -103,7 +103,7 @@ class gameArea{
 				this.bullets[i].update(this.context);
 				for (var j = 0; j < this.players.length; j++) {
 					if (this.players[j].isHit(this.bullets[i])){
-						this.players[j].takeDamage(this.bullets[i].getDamage());
+						this.players[j].health -= (this.bullets[i].dmg);
 						this.bullets.splice(i,1);
 						break;
 					}
@@ -118,10 +118,10 @@ class gameArea{
 
 	//Change fists to create a "zone" between both fists and check for intersection instead
 	checkPlayerHit (bullet) {
-		var pBody = this.player.getBody();
+		var pBody = this.player.body;
 		for (var i = 1; i < this.players.length; i++) {
 			if (circleCircleIntersection(fist.x + pBody.x, fist.y + pBody.y, handRadius, pBody.x, pBody.y, pBody.r)) {
-				this.players[i].takeDamage(damage);
+				this.players[i].health -= damage;
 				this.objects.push(new bloodstain(fist.x + pBody.x, fist.y + pBody.y));
 				return true;
 			}
@@ -155,23 +155,19 @@ class gameArea{
 
 	keyUp (e) {
 		this.pressed[e.code] = false;
-		//this.myCharacter.setInput(e.code,false);
 	}
 	keyDown (e) {
 		this.pressed[e.code] = true;
-		//this.myCharacter.setInput(e.code,true);
 	}
 	lMouseDown (e) {
 		this.pressed['lMBDown'] = true;
-		//this.myCharacter.setInput('lMBDown',true);
 	}
 	lMouseUp (e) {
 		this.pressed['lMBDown'] = false;
-		//this.myCharacter.setInput('lMBDown',false);
 	}
 
 	mouseMove (e) {
-		this.myCharacter.changeDir(angleFromVec({x:this.myCharacter.getX() + this.myCharacter.getBody().getXOffset(), y:this.myCharacter.getY() + this.myCharacter.getBody().getYOffset()}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY}));
+		this.myCharacter.dir = angleFromVec({x:this.myCharacter.x + this.myCharacter.body.xOffset, y:this.myCharacter.y + this.myCharacter.body.yOffset}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY});
 	}
 
 	sendInputChanges () {

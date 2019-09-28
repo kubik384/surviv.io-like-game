@@ -16,14 +16,10 @@ class item extends gameObject {
 		var maxRange = 50;
 		return ((Math.abs(x - this.x) < maxRange) && (Math.abs(y - this.y) < maxRange));
 	}
-	// Returns the name of the item
-	getName  () {
-		return this.name;
-	}
 
-	setAngle (angle) {
+	set angle (angle) {
 		for (var i = 0; i < this.components.length; i++) {
-			this.components[i].setAngle(angle);
+			this.components[i].angle = angle;
 		}
 	}
 }

@@ -6,14 +6,6 @@ class component {
 		this.yOffset = yOffset;
 }
 
-	getXOffset () {
-		return this.xOffset;
-	}
-
-	getYOffset () {
-		return this.yOffset;
-	}
-
 	setXYOffset (x,y) {
 		this.xOffset = x;
 		this.yOffset = y;
@@ -33,10 +25,6 @@ class shape extends component {
 		this.strokeColor = strokeColor;
 		this.angle = angle;
 	}
-
-	setAngle (angle) {
-		this.angle = angle;
-	}
 }
 
 class circle extends shape {
@@ -52,13 +40,9 @@ class circle extends shape {
 	isIntersectingCircle (x1,x2,y1,y2,circle) {
 		x1 = x1 + this.xOffset;
 		y1 = y1 + this.yOffset;
-		x2 = x2 + circle.getXOffset();
-		y2 = y2 + circle.getYOffset();
-		return ((Math.pow(x1 - x2,2) + Math.pow(y1 - y2,2)) < (Math.pow((this.radius + circle.getRadius()),2)));
-	}
-
-	getRadius  () {
-		return this.radius;
+		x2 = x2 + circle.xOffset;
+		y2 = y2 + circle.yOffset;
+		return ((Math.pow(x1 - x2,2) + Math.pow(y1 - y2,2)) < (Math.pow((this.radius + circle.radius),2)));
 	}
 
 	update (ctx, x, y, rotCenterPoint = {x:0,y:0}) {
@@ -118,14 +102,6 @@ class rectangle extends shape {
 		if (this.angle != 0) {
 			ctx.restore();
 		}
-	}
-
-	getWidth () {
-		return this.width;
-	}
-
-	getHeight () {
-		return this.height;
 	}
 }
 

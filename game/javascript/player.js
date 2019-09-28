@@ -13,38 +13,39 @@ class player extends gameObject {
 		this.health = 100;
 		this.speed = 10;
 		this.dir = 0;
+		this._dir;
 	}
 
 	//Draws body and player's weapon
 	update (ctx) {
-		this.lHand.update(ctx, this.x, this.y, {x:this.body.getXOffset() + this.x,y:this.body.getYOffset() + this.y});
-		this.rHand.update(ctx, this.x, this.y, {x:this.body.getXOffset() + this.x,y:this.body.getYOffset() + this.y});
+		this.lHand.update(ctx, this.x, this.y, {x:this.body.xOffset + this.x,y:this.body.yOffset + this.y});
+		this.rHand.update(ctx, this.x, this.y, {x:this.body.xOffset + this.x,y:this.body.yOffset + this.y});
 		this.weapons[0].setXY(this.x,this.y);
 		this.weapons[0].update(ctx);
 		this.body.update(ctx, this.x, this.y);
 	}
-	changeDir (angle) {
+	set dir (angle) {
 		angle = angle - (angle !== -180 ? -180 : 0);
-		this.lHand.setAngle(angle);
-		this.rHand.setAngle(angle);
+		this.lHand.angle = angle;
+		this.rHand.angle = angle;
 		
 		for (var i = 0; i < this.weapons.length; i++) {
-			this.weapons[i].setAngle(angle);
+			this.weapons[i].angle = angle;
 		}
-		this.dir = angle;
+		this._dir = angle;
 	}
 	// Picks weapon and drops his old if he had one
 	pickWeapon (weapon) {
 		//weapon.setXY(this.body.x, this.body.y);
-		weapon.pickUp(this, this.lHand, this.rHand, this.dir);
+		weapon.pickUp(this.lHand, this.rHand, this.dir);
 		this.weapons[0] = weapon;
-		document.getElementById("ui-weapon").innerHTML = weapon.getName();
+		document.getElementById("ui-weapon").innerHTML = weapon.name;
 	}
 	// Puts passed item into player's inventory
 	pickItem (item) {
 		this.inventory.push(item);
 		var itemDiv = document.createElement("div");
-		var itemName = document.createTextNode(item.getName());
+		var itemName = document.createTextNode(item.name);
 		itemDiv.appendChild(itemName);
 		document.getElementById("ui-inventory").appendChild(itemDiv);
 	}
@@ -52,9 +53,6 @@ class player extends gameObject {
 	move (delta_x, delta_y) {
 		this.x += delta_x;
 		this.y += delta_y;
-	}
-	getBody () {
-		return this.body;
 	}
 
 	useWeapon () {
@@ -71,23 +69,11 @@ class player extends gameObject {
 		return false;
 	}
 
-	takeDamage (damage) {
-		this.health -= damage;
-	}
-
 	isAlive () {
 		return (this.health > 0);
 	}
 
-	getSpeed () {
-		return this.speed;
-	}
-
-	getAngle () {
-		return this.dir;
-	}
-
 	isHit (bullet) {
-		return this.body.isIntersectingCircle(this.x, bullet.getX(), this.y, bullet.getY(), bullet.getComponent());
+		return this.body.isIntersectingCircle(this.x, bullet.x, this.y, bullet.y, bullet.components[0]);
 	}
 }

@@ -7,14 +7,6 @@ class gameObject {
 		this.components = components;
 	}
 
-	getX () {
-		return this.x;
-	}
-
-	getY () {
-		return this.y;
-	}
-
 	setXY (x,y) {
 		this.x = x;
 		this.y = y;

@@ -7,7 +7,7 @@ class weapon extends item {
 		this.recoil = recoil;
 		this.frameCdLeft = 0;
 		this.frameCd = cooldown;
-		this.setAngle(angle);
+		this.angle = angle;
 		this.dir = angle;
 	}
 
@@ -25,22 +25,21 @@ class weapon extends item {
 		this.y = y;
 	}
 
-	pickUp (lHand, rHand, lhX, lhY, rhX, rhY, newOwner, angle = 0) {
+	pickUp (lHand, rHand, lhX, lhY, rhX, rhY, angle = 0) {
 		if (lHand !== null) {
 			lHand.setXYOffset(lhX, lhY);
 		}
 		if (rHand !== null) {
 			rHand.setXYOffset(rhX, rhY);
 		}
-		this.owner = newOwner;
-		this.setAngle(angle);
+		this.angle = angle;
 	}
 
 	use () {
 	}
 
-	setAngle (angle) {
-		item.prototype.setAngle.call(this,angle);
+	set angle (angle) {
+		super.angle = angle;
 		this.dir = angle;
 	}
 
@@ -72,14 +71,14 @@ class ak47 extends weapon {
 	use () {
 		if (this.isReady()) {
 			this.frameCdLeft += this.frameCd;
-			var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].getHeight() + this.y, this.dir - 180);
+			var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].height + this.y, this.dir - 180);
 			return (new bullet(bulletCoords.x, bulletCoords.y, this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7, "black")]));
 		}
 		return null;
 	}
 
-	pickUp (body, lHand = null, rHand = null, angle = 0) {
-		super.pickUp(lHand, rHand, 8, -50, 0, -15, body, angle);
+	pickUp (lHand = null, rHand = null, angle = 0) {
+		super.pickUp(lHand, rHand, 8, -50, 0, -15, angle);
 	}
 }
 
@@ -92,8 +91,8 @@ class um9 extends weapon {
 		
 	}
 
-	pickUp (body, lHand = null, rHand = null, angle = 0) {
-		super.pickUp(lHand, rHand, 8, -50, 0, -15, body, angle);
+	pickUp (lHand = null, rHand = null, angle = 0) {
+		super.pickUp(lHand, rHand, 8, -50, 0, -15, angle);
 	}
 }
 
@@ -117,13 +116,5 @@ class bullet extends gameObject {
 
 	hasExpired  () {
 		return (this.lifetime < 1);
-	}
-
-	getDamage () {
-		return this.dmg;
-	}
-
-	getComponent () {
-		return this.components[0];
 	}
 }
