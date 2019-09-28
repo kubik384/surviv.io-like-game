@@ -1,69 +1,75 @@
 "use strict";
 
-function gameObject(x, y, components) {
-	this.x = x;
-	this.y = y;
-	this.components = components;
+class gameObject {
+	constructor (x, y, components) {
+		this.x = x;
+		this.y = y;
+		this.components = components;
+	}
+
+	getX () {
+		return this.x;
+	}
+
+	getY () {
+		return this.y;
+	}
+
+	setXY (x,y) {
+		this.x = x;
+		this.y = y;
+	}
+
+	update (ctx) {
+		for (var i = 0; i < this.components.length; i++) {
+			this.components[i].update(ctx, this.x, this.y);
+		}		
+	}
 }
 
-gameObject.prototype.getX = function () {
-	return this.x;
+class bloodstain extends gameObject {
+	constructor (x,y) {
+		super(new img());
+	}
 }
 
-gameObject.prototype.getY = function () {
-	return this.y;
+class tree extends gameObject {
+	constructor (x,y) {
+		super(new circle(200, 200, Math.floor((Math.random()*10 + 10)), fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = true, strokeColor = "rgb(139,69,19)"));
+	}
 }
 
-gameObject.prototype.setXY = function (x,y) {
-	this.x = x;
-	this.y = y;
+class barrel extends gameObject {
+	constructor (x,y) {
+	}
 }
 
-gameObject.prototype.update = function (ctx) {
-	for (var i = 0; i < this.components.length; i++) {
-		this.components[i].update(ctx, this.x, this.y);
-	}		
-}
+class bullet extends gameObject {
+	constructor (x, y, dir, speed, dmg, slowdown, lifetime, components) {
+		super(x,y,components);
+		this.dmg = dmg;
+		this.speed = speed
+		this.vector = vecFromAngle(dir);
+		this.slowdown = slowdown;
+		this.lifetime = lifetime;
+	}
 
-bloodstain.prototype = Object.create(gameObject.prototype);
-function bloodstain(x,y) {
-	gameObject.call(new img());
-}
+	update (ctx) {
+		this.setXY(this.x + this.vector.x * this.speed, this.y + this.vector.y * this.speed);
+		this.speed /= this.slowdown;
+		this.lifetime -= 1;
+		update.call(this, ctx);
+	}
 
-tree.prototype = Object.create(gameObject.prototype);
-function tree(x,y) {
-	gameObject.call(new circle(200, 200, Math.floor((Math.random()*10 + 10)), fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = true, strokeColor = "rgb(139,69,19)"));
-}
+	hasExpired  () {
+		return (this.lifetime < 1);
+	}
 
-barrel.prototype = Object.create(gameObject.prototype);
-function barrel(x,y) {
-}
+	getDamage () {
+		return this.dmg;
+	}
 
-bullet.prototype = Object.create(gameObject.prototype);
-function bullet(x, y, dir, speed, dmg, slowdown, lifetime, components) {
-	gameObject.call(this,x,y,components);
-	this.dmg = dmg;
-	this.speed = speed
-	this.vector = vecFromAngle(dir);
-	this.slowdown = slowdown;
-	this.lifetime = lifetime;
-}
-
-bullet.prototype.update = function(ctx) {
-	this.setXY(this.x + this.vector.x * this.speed, this.y + this.vector.y * this.speed);
-	this.speed /= this.slowdown;
-	this.lifetime -= 1;
-	gameObject.prototype.update.call(this, ctx);
-}
-
-bullet.prototype.hasExpired = function () {
-	return (this.lifetime < 1);
-}
-
-bullet.prototype.getDamage = function() {
-	return this.dmg;
-}
-
-bullet.prototype.getComponent = function() {
-	return this.components[0];
+	getComponent () {
+		return this.components[0];
+	}
 }
