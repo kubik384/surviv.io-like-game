@@ -20,12 +20,12 @@ class weapon extends item {
 		}
 	}
 
-	setXY = function(x,y) {
+	setXY (x,y) {
 		this.x = x;
 		this.y = y;
 	}
 
-	pickUp = function(lHand, rHand, lhX, lhY, rhX, rhY, newOwner, angle = 0) {
+	pickUp (lHand, rHand, lhX, lhY, rhX, rhY, newOwner, angle = 0) {
 		if (lHand !== null) {
 			lHand.setXYOffset(lhX, lhY);
 		}
@@ -36,15 +36,15 @@ class weapon extends item {
 		this.setAngle(angle);
 	}
 
-	use = function() {
+	use () {
 	}
 
-	setAngle = function(angle) {
+	setAngle (angle) {
 		item.prototype.setAngle.call(this,angle);
 		this.dir = angle;
 	}
 
-	isReady = function() {
+	isReady () {
 		return this.frameCdLeft < 1;
 	}
 }
@@ -72,11 +72,10 @@ class ak47 extends weapon {
 	use () {
 		if (this.isReady()) {
 			this.frameCdLeft += this.frameCd;
-			var bulletCoords = rotate(this.owner.getX(), this.owner.getY(), this.owner.getX(), this.components[0].getHeight() + this.owner.getY(), this.dir - 180);
+			var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].getHeight() + this.y, this.dir - 180);
 			return (new bullet(bulletCoords.x, bulletCoords.y, this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7, "black")]));
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	pickUp (body, lHand = null, rHand = null, angle = 0) {
@@ -95,5 +94,36 @@ class um9 extends weapon {
 
 	pickUp (body, lHand = null, rHand = null, angle = 0) {
 		super.pickUp(lHand, rHand, 8, -50, 0, -15, body, angle);
+	}
+}
+
+
+class bullet extends gameObject {
+	constructor (x, y, dir, speed, dmg, slowdown, lifetime, components) {
+		super(x,y,components);
+		this.dmg = dmg;
+		this.speed = speed
+		this.vector = vecFromAngle(dir);
+		this.slowdown = slowdown;
+		this.lifetime = lifetime;
+	}
+
+	update (ctx) {
+		this.setXY(this.x + this.vector.x * this.speed, this.y + this.vector.y * this.speed);
+		this.speed /= this.slowdown;
+		this.lifetime -= 1;
+		super.update(ctx);
+	}
+
+	hasExpired  () {
+		return (this.lifetime < 1);
+	}
+
+	getDamage () {
+		return this.dmg;
+	}
+
+	getComponent () {
+		return this.components[0];
 	}
 }

@@ -43,33 +43,3 @@ class barrel extends gameObject {
 	constructor (x,y) {
 	}
 }
-
-class bullet extends gameObject {
-	constructor (x, y, dir, speed, dmg, slowdown, lifetime, components) {
-		super(x,y,components);
-		this.dmg = dmg;
-		this.speed = speed
-		this.vector = vecFromAngle(dir);
-		this.slowdown = slowdown;
-		this.lifetime = lifetime;
-	}
-
-	update (ctx) {
-		this.setXY(this.x + this.vector.x * this.speed, this.y + this.vector.y * this.speed);
-		this.speed /= this.slowdown;
-		this.lifetime -= 1;
-		update.call(this, ctx);
-	}
-
-	hasExpired  () {
-		return (this.lifetime < 1);
-	}
-
-	getDamage () {
-		return this.dmg;
-	}
-
-	getComponent () {
-		return this.components[0];
-	}
-}
