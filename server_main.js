@@ -197,6 +197,8 @@ class game_area {
 		this.players = {};
 		this.items = [];
 		this.bullets = [];
+		this.translationTable = {};
+		this.currPlayerID = 0;
 	}
 
 	update() {
@@ -209,33 +211,39 @@ class game_area {
 		for (var i = 0; i < this.bullets.length; i++) {
 			this.bullets[i].update();
 		}
+
+		io.sockets.emit('game_update', game_board.players);
 	}
 
 	addPlayer(playerID) {
-		this.players[playerID] = new player(0,0);
+		this.translationTable[playerID] = this.currPlayerID;
+		this.players[this.currPlayerID++] = new player(0,0);
 	}
 
 	processInput(playerID, input) {
-		var player = this.players[playerID];
-		var delta_x = 0;
-		var delta_y = 0;
-		if (input['KeyA']) {
-			delta_x -= 1;
+		var player = this.players[this.translationTable[playerID]];
+		if (player !== undefined && player.isAlive()) {
+			var delta_x = 0;
+			var delta_y = 0;
+			if (input['KeyA']) {
+				delta_x -= 1;
+			}
+			if (input['KeyW']) {
+				delta_y -= 1;
+			}
+			if (input['KeyD']) {
+				delta_x += 1;
+			}
+			if (input['KeyS']) {
+				delta_y += 1;
+			}
+			player.move(delta_x*player.speed,delta_y*player.speed);
 		}
-		if (input['KeyW']) {
-			delta_y -= 1;
-		}
-		if (input['KeyD']) {
-			delta_x += 1;
-		}
-		if (input['KeyS']) {
-			delta_y += 1;
-		}
-		player.move(delta_x*player.speed,delta_y*player.speed);
 	}
 
 	removePlayer(playerID) {
-		delete this.players[playerID];
+		delete this.players[this.translationTable[playerID]];
+		delete this.translationTable[playerID];
 	}
 }
 
@@ -281,12 +289,12 @@ server.listen(8080, function() {
 io.on('connection', function(socket) {
 	socket.on('new_player', function() {
 		game_board.addPlayer(socket.id);
+		socket.emit('added_character', game_board.translationTable[socket.id]);
 	});
 	
 	socket.on('player_input', function(input) {
-		  game_board.processInput(socket.id, input);
-		  socket.emit('message', game_board.players[socket.id]);
-		  io.sockets.emit('game_update', game_board.players);
+		//Could be abused by increasing setInterval to lower values, sending input faster and therefore example move faster
+		game_board.processInput(socket.id, input);
 	});
 
 	socket.on('disconnect', function() {
