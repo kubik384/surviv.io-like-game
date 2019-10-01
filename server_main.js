@@ -152,6 +152,10 @@ class player extends game_object {
 		}
 		this._dir = angle;
 	}
+
+	get dir() {
+		return this._dir;
+	}
 	// Picks weapon and drops his old if he had one
 	pickWeapon (weapon) {
 		weapon.setXY(this.body.x, this.body.y);
@@ -237,6 +241,7 @@ class game_area {
 			if (input['KeyS']) {
 				delta_y += 1;
 			}
+			player.dir = input['Dir'];
 			player.move(delta_x*player.speed,delta_y*player.speed);
 		}
 	}
@@ -265,7 +270,6 @@ function rotate(cx, cy, x, y, angle) {
     return {x:nx,y:ny};
 }
 
-
 var express = require('express');
 var http = require('http');
 var path = require('path');
@@ -289,11 +293,12 @@ server.listen(8080, function() {
 io.on('connection', function(socket) {
 	socket.on('new_player', function() {
 		game_board.addPlayer(socket.id);
-		socket.emit('added_character', game_board.translationTable[socket.id]);
+		//socket.emit('game_state', game_data,game_board.translationTable[socket.id]);
 	});
 	
 	socket.on('player_input', function(input) {
 		//Could be abused by increasing setInterval to lower values, sending input faster and therefore example move faster
+		//Server can be fricked by sending empty input object & probably get request spammed
 		game_board.processInput(socket.id, input);
 	});
 
