@@ -1,24 +1,24 @@
 "use strict";
 
 class gameArea{
-	constructor (game_state, myCharacterID) {
+	constructor () {
 		this.canvas = document.createElement("canvas");
 		this.canvas.width = window.innerWidth;
 		this.canvas.height = window.innerHeight;
 		document.body.insertBefore(this.canvas, document.body.childNodes[0]);
 		this.context = this.canvas.getContext("2d");
-		this.myCharacterID = myCharacterID;
 		this._xOffset = 0;
 		this._yOffset = 0;
 		this.xOffset = -this.canvas.width/2;
 		this.yOffset = -this.canvas.height/2;
-		this.interval = setInterval(this.update.bind(this), 1000/60);
+		this.interval;
 		this.inRangeItemIndex = -1;
 		this.pickItem = false;
-		this.players = {};this.myCharacterID;
-		this.input = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'KeyF':false, 'lMBDown':false, 'Dir':this.players[this.myCharacterID].dir};
+		this.input = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'KeyF':false, 'lMBDown':false};
+		this.players = {};
 		this.bullets = [];
 		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
+		this.myCharacterID;
 	}
 
 
@@ -156,7 +156,6 @@ class gameArea{
 
 	mouseMove (e) {
 		this.players[this.myCharacterID].dir = angleFromVec({x:this.players[this.myCharacterID].x + this.players[this.myCharacterID].body.xOffset, y:this.players[this.myCharacterID].y + this.players[this.myCharacterID].body.yOffset}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY});
-		this.input['Dir'] = this.players[this.myCharacterID].dir;
 	}
 
 	sendInput () {
@@ -165,14 +164,11 @@ class gameArea{
 
 	updateGame (players) {
 		for (var playerID in players) {
-			var serverPlayer = players[playerID];
-			
 			if (this.players[playerID] === undefined) {
-				this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
+				this.players[playerID] = new player(players[playerID].x,players[playerID].y);
 			} else {
-				this.players[playerID].x = serverPlayer.x;
-				this.players[playerID].y = serverPlayer.y;
-				this.players[playerID].dir = serverPlayer._dir;
+				this.players[playerID].x = players[playerID].x;
+				this.players[playerID].y = players[playerID].y;
 			}
 		}
 
@@ -181,5 +177,10 @@ class gameArea{
 				delete this.players[playerID];
 			}
 		}
+	}
+
+	start(myCharacterID) {
+		this.myCharacterID = myCharacterID;
+		this.interval = setInterval(this.update.bind(this), 1000/60);
 	}
 }

@@ -34,9 +34,6 @@ class player extends gameObject {
 		}
 		this._dir = angle;
 	}
-	get dir() {
-		return this._dir;
-	}
 	// Picks weapon and drops his old if he had one
 	pickWeapon (weapon) {
 		weapon.setXY(this.body.x, this.body.y);
