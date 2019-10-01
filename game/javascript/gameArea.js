@@ -12,13 +12,16 @@ class gameArea{
 		this._yOffset = 0;
 		this.xOffset = -this.canvas.width/2;
 		this.yOffset = -this.canvas.height/2;
-		this.interval = setInterval(this.update.bind(this), 1000/60);
 		this.inRangeItemIndex = -1;
 		this.pickItem = false;
-		this.players = {};this.myCharacterID;
+		this.players = {};
+		for (var playerID in game_state.players) {
+			this.players[playerID] = new player(game_state.players[playerID].x, game_state.players[playerID].y);
+		}
 		this.input = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'KeyF':false, 'lMBDown':false, 'Dir':this.players[this.myCharacterID].dir};
 		this.bullets = [];
 		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
+		this.interval = setInterval(this.update.bind(this), 1000/60);
 	}
 
 
@@ -163,12 +166,13 @@ class gameArea{
 		socket.emit('player_input', this.input);
 	}
 
-	updateGame (players) {
-		for (var playerID in players) {
-			var serverPlayer = players[playerID];
+	update_game (game_state_update) {
+		for (var playerID in game_state_update.players) {
+			var serverPlayer = game_state_update.players[playerID];
 			
 			if (this.players[playerID] === undefined) {
 				this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
+				this.players[playerID].dir = serverPlayer._dir;
 			} else {
 				this.players[playerID].x = serverPlayer.x;
 				this.players[playerID].y = serverPlayer.y;
@@ -177,7 +181,7 @@ class gameArea{
 		}
 
 		for (var playerID in this.players) {
-			if (players[playerID] === undefined) {
+			if (game_state_update.players[playerID] === undefined) {
 				delete this.players[playerID];
 			}
 		}

@@ -216,7 +216,7 @@ class game_area {
 			this.bullets[i].update();
 		}
 
-		io.sockets.emit('game_update', game_board.players);
+		io.sockets.emit('game_update', {players:game_board.players});
 	}
 
 	addPlayer(playerID) {
@@ -243,6 +243,9 @@ class game_area {
 			}
 			player.dir = input['Dir'];
 			player.move(delta_x*player.speed,delta_y*player.speed);
+			if (input['lMBDown']) {
+				
+			}
 		}
 	}
 
@@ -293,7 +296,7 @@ server.listen(8080, function() {
 io.on('connection', function(socket) {
 	socket.on('new_player', function() {
 		game_board.addPlayer(socket.id);
-		//socket.emit('game_state', game_data,game_board.translationTable[socket.id]);
+		socket.emit('game_state', {players: game_board.players}, game_board.translationTable[socket.id]);
 	});
 	
 	socket.on('player_input', function(input) {

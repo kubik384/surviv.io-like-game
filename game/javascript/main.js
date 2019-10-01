@@ -12,14 +12,12 @@ function request_data() {
 socket.on('message', function(data) {
 	console.log(data);
 });
-socket.on('game_data', function(data,myCharacterID) {
-	selectedCanvas = new gameArea(data,myCharacterID);
+socket.on('game_state', function(game_state, myCharacterID) {
+	selectedCanvas = new gameArea(game_state, myCharacterID);
+	socket.on('game_update', function(game_state_update) {
+		selectedCanvas.update_game(game_state_update);
+	});
 });
-socket.on('game_update', function(players) {
-	selectedCanvas.updateGame(players);
-});
-
-//selectedCanvas.updateGame(players,bullets,items));
 
 window.addEventListener('keydown', function(e) {
 	selectedCanvas.keyDown(e);
