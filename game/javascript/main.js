@@ -3,8 +3,7 @@
 var socket = io();
 var selectedCanvas;
 
-function startGame() {
-	selectedCanvas = new gameArea();
+function request_data() {
 	socket.emit('new_player');
 }
 
@@ -13,11 +12,11 @@ function startGame() {
 socket.on('message', function(data) {
 	console.log(data);
 });
+socket.on('game_data', function(data,myCharacterID) {
+	selectedCanvas = new gameArea(data,myCharacterID);
+});
 socket.on('game_update', function(players) {
 	selectedCanvas.updateGame(players);
-});
-socket.on('added_character', function(myCharacterID) {
-	selectedCanvas.start(myCharacterID);
 });
 
 //selectedCanvas.updateGame(players,bullets,items));
