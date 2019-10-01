@@ -48,21 +48,6 @@ class weapon extends item {
 	}
 }
 
-/*
-fists.prototype = Object.create(weapon.prototype);
-function fists(lHand, rHand, angle = 0) {
-	lHand.xOffset = -24;
-	lHand.yOffset = -23;
-	rHand.xOffset = 24;
-	rHand.yOffset = -23;
-	weapon.call(this, x, y, 15, "Fists", 17, angle);
-	this.lPunch = false;
-	this.rPunch = false;
-	this.hit = false;
-}
-*/
-
-
 class ak47 extends weapon {
 	constructor (x, y, angle = 0) {
 		super(x,y,10,3,6,angle,"AK-47",[new rectangle(-6,-20,12,-60,"black",1,true,"black",angle)]);

@@ -105,7 +105,7 @@ class rectangle extends shape {
 	}
 }
 
-class img extends shape {
+class img extends component {
 	constructor () {
 	}
 

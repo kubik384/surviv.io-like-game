@@ -13,8 +13,8 @@ function startGame() {
 socket.on('message', function(data) {
 	console.log(data);
 });
-socket.on('game_update', function() {
-	console.log('Updating game state');
+socket.on('game_update', function(players) {
+	selectedCanvas.updateGame(players);
 });
 
 //selectedCanvas.updateGame(players,bullets,items));

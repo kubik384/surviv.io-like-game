@@ -3,8 +3,6 @@
 class item extends gameObject {
 	constructor (x, y, components, name = "item") {
 		super(x, y, components);
-		this.x = x;
-		this.y = y;
 		this.name = name;
 	}
 

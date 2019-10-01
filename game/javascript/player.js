@@ -36,7 +36,7 @@ class player extends gameObject {
 	}
 	// Picks weapon and drops his old if he had one
 	pickWeapon (weapon) {
-		//weapon.setXY(this.body.x, this.body.y);
+		weapon.setXY(this.body.x, this.body.y);
 		weapon.pickUp(this.lHand, this.rHand, this.dir);
 		this.weapons[0] = weapon;
 		document.getElementById("ui-weapon").innerHTML = weapon.name;

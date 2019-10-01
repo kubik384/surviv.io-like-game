@@ -113,20 +113,7 @@ class gameArea{
 			}
 		}
 
-		//this.sendInputChanges();
-	}
-
-	//Change fists to create a "zone" between both fists and check for intersection instead
-	checkPlayerHit (bullet) {
-		var pBody = this.player.body;
-		for (var i = 1; i < this.players.length; i++) {
-			if (circleCircleIntersection(fist.x + pBody.x, fist.y + pBody.y, handRadius, pBody.x, pBody.y, pBody.r)) {
-				this.players[i].health -= damage;
-				this.objects.push(new bloodstain(fist.x + pBody.x, fist.y + pBody.y));
-				return true;
-			}
-		}
-		return false;
+		this.sendInput();
 	}
 
 	moveScreenBy (x,y) {
@@ -170,13 +157,11 @@ class gameArea{
 		this.myCharacter.dir = angleFromVec({x:this.myCharacter.x + this.myCharacter.body.xOffset, y:this.myCharacter.y + this.myCharacter.body.yOffset}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY});
 	}
 
-	sendInputChanges () {
-		//socket.emit('input_changes', this.myCharacter.getInput());
+	sendInput () {
+		socket.emit('player_input', this.pressed);
 	}
 
-	updateGame (players,bullets,items) {
-		this.players = players;
-		this.bullets = bullets;
-		this.items = items;
+	updateGame (players) {
+		console.log(players);
 	}
 }
