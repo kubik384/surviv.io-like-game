@@ -28,7 +28,7 @@ class shape extends component {
 }
 
 class circle extends shape {
-	constructor (xOffset, yOffset, radius, fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = false, strokeColor = null, rotCenterPoint = 0) {
+	constructor (xOffset, yOffset, radius, fillColor = "rgb(255,255,255)", lineWidth = 1, stroke = false, strokeColor = null) {
 		super(xOffset, yOffset, fillColor, lineWidth, stroke, strokeColor);
 		this.radius = radius;
 	}

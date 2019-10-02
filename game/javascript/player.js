@@ -25,7 +25,6 @@ class player extends gameObject {
 		this.body.update(ctx, this.x, this.y);
 	}
 	set dir (angle) {
-		angle = angle - (angle !== -180 ? -180 : 0);
 		this.lHand.angle = angle;
 		this.rHand.angle = angle;
 		

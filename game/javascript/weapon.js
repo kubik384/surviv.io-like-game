@@ -8,7 +8,7 @@ class weapon extends item {
 		this.frameCdLeft = 0;
 		this.frameCd = cooldown;
 		this.angle = angle;
-		this.dir = angle;
+		this.dir;
 	}
 
 	update (ctx) {
@@ -83,11 +83,11 @@ class um9 extends weapon {
 
 
 class bullet extends gameObject {
-	constructor (x, y, dir, speed, dmg, slowdown, lifetime, components) {
+	constructor (x, y, vector, speed, dmg, slowdown, lifetime, components) {
 		super(x,y,components);
 		this.dmg = dmg;
 		this.speed = speed
-		this.vector = vecFromAngle(dir);
+		this.vector = vector;
 		this.slowdown = slowdown;
 		this.lifetime = lifetime;
 	}

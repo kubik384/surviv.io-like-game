@@ -1,9 +1,69 @@
 "use strict"
 
+class component {
+	constructor (xOffset = 0, yOffset = 0) {
+		this.xOffset = xOffset;
+		this.yOffset = yOffset;
+}
+
+	setXYOffset (x,y) {
+		this.xOffset = x;
+		this.yOffset = y;
+	}
+
+	getXYOffset () {
+		return [this.xOffset,this.yOffset];
+	}
+}
+
+class shape extends component {
+	constructor (xOffset, yOffset, angle = 0) {
+		super(xOffset, yOffset);
+		this.angle = angle;
+	}
+}
+
+class circle extends shape {
+	constructor (xOffset, yOffset, radius) {
+		super(xOffset, yOffset);
+		this.radius = radius;
+	}
+
+	circleIntersection (x1,x2,y1,y2,circle) {
+
+	}
+
+	isIntersectingCircle (x1,x2,y1,y2,circle) {
+		x1 = x1 + this.xOffset;
+		y1 = y1 + this.yOffset;
+		x2 = x2 + circle.xOffset;
+		y2 = y2 + circle.yOffset;
+		return ((Math.pow(x1 - x2,2) + Math.pow(y1 - y2,2)) < (Math.pow((this.radius + circle.radius),2)));
+	}
+}
+
+class rectangle extends shape {
+	constructor (xOffset, yOffset, width, height, angle = 0) {
+		super(xOffset, yOffset, angle);
+		this.width = width;
+		this.height = height;
+	}
+}
+
+class img extends component {
+	constructor () {
+	}
+
+	draw () {
+		ctx.drawImage(img, x, y);
+	}
+}
+
 class game_object {
-	constructor (x, y) {
+	constructor (x, y, components) {
 		this.x = x;
 		this.y = y;
+		this.components = components;
 	}
 
 	setXY (x,y) {
@@ -25,8 +85,8 @@ class barrel extends game_object {
 }
 
 class item extends game_object {
-	constructor (x, y) {
-		super(x, y);
+	constructor (x, y, components) {
+		super(x, y, components);
 	}
 
 	update (ctx) {
@@ -38,16 +98,23 @@ class item extends game_object {
 		var maxRange = 50;
 		return ((Math.abs(x - this.x) < maxRange) && (Math.abs(y - this.y) < maxRange));
 	}
+
+	set angle (angle) {
+		for (var i = 0; i < this.components.length; i++) {
+			this.components[i].angle = angle;
+		}
+	}
 }
 
 class weapon extends item {
-	constructor (x, y, damage, recoil, cooldown, angle) {
-		super(x,y);
+	constructor (x, y, damage, recoil, cooldown, angle, components) {
+		super(x,y,components);
 		this.damage = damage;
 		this.recoil = recoil;
 		this.frameCdLeft = 0;
 		this.frameCd = cooldown;
-		this.dir = angle;
+		this.angle = angle;
+		this.dir;
 	}
 
 	update (ctx) {
@@ -62,25 +129,34 @@ class weapon extends item {
 	}
 
 	pickUp (angle = 0) {
-		this.dir = angle;
+		this.angle = angle;
 	}
 
 	isReady () {
 		return this.frameCdLeft < 1;
+	}
+	
+	set angle (angle) {
+		super.angle = angle;
+		this.dir = angle;
+	}
+
+	get angle () {
+		return this.dir;
 	}
 }
 
 
 class ak47 extends weapon {
 	constructor (x, y, angle = 0) {
-		super(x,y,10,3,6,angle);
+		super(x,y,10,3,6,angle,[new rectangle(-6,-20,12,-60,angle)]);
 	}
 
 	use () {
 		if (this.isReady()) {
 			this.frameCdLeft += this.frameCd;
 			var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].height + this.y, this.dir - 180);
-			return (new bullet(bulletCoords.x, bulletCoords.y, this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10));
+			return (new bullet(bulletCoords.x, bulletCoords.y, this.angle + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7)]));
 		}
 		return null;
 	}
@@ -92,7 +168,7 @@ class ak47 extends weapon {
 
 class um9 extends weapon {
 	constructor (x, y, angle = 0) {
-		super(x,y,10,4,5,angle);
+		super(x,y,10,4,5,angle,[new rectangle(-8,-20,16,-60,angle)]);
 	}
 
 	use () {
@@ -106,8 +182,8 @@ class um9 extends weapon {
 
 
 class bullet extends game_object {
-	constructor (x, y, dir, speed, dmg, slowdown, lifetime) {
-		super(x,y);
+	constructor (x, y, dir, speed, dmg, slowdown, lifetime, components) {
+		super(x,y,components);
 		this.dmg = dmg;
 		this.speed = speed
 		this.vector = vecFromAngle(dir);
@@ -128,7 +204,10 @@ class bullet extends game_object {
 
 class player extends game_object {
 	constructor (x, y) {
-		super(x, y);
+		super(x, y, [new circle(0, 0, 30), new circle(-24, -23, 10), new circle(24, -23, 10)]);
+		this.body = this.components[0];
+		this.lHand = this.components[1];
+		this.rHand = this.components[2];
 		this.inventory = [];
 		this.weapons = [new ak47(x,y)];
 		this.weapons[0].pickUp();
@@ -144,8 +223,10 @@ class player extends game_object {
 		this.weapons[0].setXY(this.x,this.y);
 		this.weapons[0].update();
 	}
+
 	set dir (angle) {
-		angle = angle - (angle !== -180 ? -180 : 0);
+		this.lHand.angle = angle;
+		this.rHand.angle = angle;
 		
 		for (var i = 0; i < this.weapons.length; i++) {
 			this.weapons[i].angle = angle;
@@ -199,33 +280,57 @@ class game_area {
 	constructor () {
 		this.interval = setInterval(this.update.bind(this), 1000/60);
 		this.players = {};
-		this.items = [];
-		this.bullets = [];
+		this.items = {};
+		this.bullets = {};
 		this.translationTable = {};
 		this.currPlayerID = 0;
+		this.currBulletID = 0;
+		this.currItemID = 0;
 	}
 
 	update() {
 		for (var playerID in this.players) {
-			this.players[playerID].update();
+			if (this.players[playerID].isAlive()) {
+				this.players[playerID].update();
+			} else {
+				for (var pid in this.translationTable) {
+					if (this.translationTable[pid] === playerID) {
+						this.removePlayer(pid);
+						break;
+					}
+				}
+			}
 		}
+
 		for (var i = 0; i < this.items.length; i++) {
 			this.items[i].update();
 		}
-		for (var i = 0; i < this.bullets.length; i++) {
-			this.bullets[i].update();
-		}
 
-		io.sockets.emit('game_update', {players:game_board.players});
+		for (var bulletID in this.bullets) {
+			var bullet = this.bullets[bulletID];
+			if (!bullet.hasExpired()) {
+				bullet.update();
+				for (var playerID in this.players) {
+					if (this.players[playerID].isHit(bullet)) {
+						this.players[playerID].health -= (bullet.dmg);
+						delete this.bullets[bulletID];
+						break;
+					}
+				}
+			} else {
+				delete this.bullets[bulletID];
+			}
+		}
+		io.sockets.emit('game_update', {players: this.players, bullets: this.bullets});
 	}
 
-	addPlayer(playerID) {
-		this.translationTable[playerID] = this.currPlayerID;
+	addPlayer(playerSID) {
+		this.translationTable[playerSID] = this.currPlayerID.toString();
 		this.players[this.currPlayerID++] = new player(0,0);
 	}
 
-	processInput(playerID, input) {
-		var player = this.players[this.translationTable[playerID]];
+	processInput(playerSID, input) {
+		var player = this.players[this.translationTable[playerSID]];
 		if (player !== undefined && player.isAlive()) {
 			var delta_x = 0;
 			var delta_y = 0;
@@ -243,15 +348,19 @@ class game_area {
 			}
 			player.dir = input['Dir'];
 			player.move(delta_x*player.speed,delta_y*player.speed);
-			if (input['lMBDown']) {
-				
+			
+			if (input['lMBDown'] && player.isWeaponReady()) {
+				var bullet = player.useWeapon();
+				if (bullet !== null) {
+					this.bullets[this.currBulletID++] = bullet;
+				}
 			}
 		}
 	}
 
-	removePlayer(playerID) {
-		delete this.players[this.translationTable[playerID]];
-		delete this.translationTable[playerID];
+	removePlayer(playerSID) {
+		delete this.players[this.translationTable[playerSID]];
+		delete this.translationTable[playerSID];
 	}
 }
 
@@ -296,7 +405,7 @@ server.listen(8080, function() {
 io.on('connection', function(socket) {
 	socket.on('new_player', function() {
 		game_board.addPlayer(socket.id);
-		socket.emit('game_state', {players: game_board.players}, game_board.translationTable[socket.id]);
+		socket.emit('game_state', {players: game_board.players, bullets: game_board.bullets}, game_board.translationTable[socket.id]);
 	});
 	
 	socket.on('player_input', function(input) {
