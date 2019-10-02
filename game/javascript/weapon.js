@@ -54,12 +54,9 @@ class ak47 extends weapon {
 	}
 
 	use () {
-		if (this.isReady()) {
-			this.frameCdLeft += this.frameCd;
-			var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].height + this.y, this.dir - 180);
-			return (new bullet(bulletCoords.x, bulletCoords.y, this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7, "black")]));
-		}
-		return null;
+		this.frameCdLeft += this.frameCd;
+		var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].height + this.y, this.dir - 180);
+		return (new bullet(bulletCoords.x, bulletCoords.y, this.dir + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7, "black")]));
 	}
 
 	pickUp (lHand = null, rHand = null, angle = 0) {

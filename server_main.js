@@ -153,12 +153,9 @@ class ak47 extends weapon {
 	}
 
 	use () {
-		if (this.isReady()) {
-			this.frameCdLeft += this.frameCd;
-			var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].height + this.y, this.dir - 180);
-			return (new bullet(bulletCoords.x, bulletCoords.y, this.angle + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7)]));
-		}
-		return null;
+		this.frameCdLeft += this.frameCd;
+		var bulletCoords = rotate(this.x, this.y, this.x, this.components[0].height + this.y, this.dir - 180);
+		return (new bullet(bulletCoords.x, bulletCoords.y, this.angle + Math.random() * this.recoil - Math.random() * this.recoil, 30, this.damage, 1.008, 30 + Math.random() * 10, [new circle(0, 0, 7)]));
 	}
 
 	pickUp (angle = 0) {
@@ -254,10 +251,7 @@ class player extends game_object {
 	}
 
 	useWeapon () {
-		if (this.weapons[0] !== null) {
-			return this.weapons[0].use();
-		}
-		return null;
+		return this.weapons[0].use();
 	}
 
 	isWeaponReady () {
@@ -281,17 +275,38 @@ class game_area {
 		this.interval = setInterval(this.update.bind(this), 1000/60);
 		this.players = {};
 		this.items = {};
-		this.bullets = {};
+		this.bullets = [];
+		this.newBullets = [];
 		this.translationTable = {};
+		this.processedInput = {};
 		this.currPlayerID = 0;
-		this.currBulletID = 0;
 		this.currItemID = 0;
 	}
 
 	update() {
+		for (var i = 0; i < this.items.length; i++) {
+			this.items[i].update();
+		}
+
+		for (var i = 0; i < this.bullets.length; i++) {
+			if (!this.bullets[i].hasExpired()) {
+				this.bullets[i].update();
+				for (var playerID in this.players) {
+					if (this.players[playerID].isHit(this.bullets[i])) {
+						this.players[playerID].health -= (this.bullets[i].dmg);
+						this.bullets.splice(i,1);
+						break;
+					}
+				}
+			} else {
+				this.bullets.splice(i,1);
+			}
+		}
+
 		for (var playerID in this.players) {
 			if (this.players[playerID].isAlive()) {
 				this.players[playerID].update();
+				this.processedInput[playerID] = false;
 			} else {
 				for (var pid in this.translationTable) {
 					if (this.translationTable[pid] === playerID) {
@@ -301,65 +316,51 @@ class game_area {
 				}
 			}
 		}
-
-		for (var i = 0; i < this.items.length; i++) {
-			this.items[i].update();
-		}
-
-		for (var bulletID in this.bullets) {
-			var bullet = this.bullets[bulletID];
-			if (!bullet.hasExpired()) {
-				bullet.update();
-				for (var playerID in this.players) {
-					if (this.players[playerID].isHit(bullet)) {
-						this.players[playerID].health -= (bullet.dmg);
-						delete this.bullets[bulletID];
-						break;
-					}
-				}
-			} else {
-				delete this.bullets[bulletID];
-			}
-		}
-		io.sockets.emit('game_update', {players: this.players, bullets: this.bullets});
+		io.sockets.emit('game_update', {players: this.players, newBullets: this.newBullets});
+		this.newBullets = [];
 	}
 
 	addPlayer(playerSID) {
 		this.translationTable[playerSID] = this.currPlayerID.toString();
+		this.processedInput[this.currPlayerID] = false;
 		this.players[this.currPlayerID++] = new player(0,0);
 	}
 
 	processInput(playerSID, input) {
-		var player = this.players[this.translationTable[playerSID]];
-		if (player !== undefined && player.isAlive()) {
+		if (typeof this.translationTable[playerSID] !== 'undefined' && !this.processedInput[this.translationTable[playerSID]] && typeof this.players[this.translationTable[playerSID]] !== 'undefined') {
+			var player = this.players[this.translationTable[playerSID]];
 			var delta_x = 0;
 			var delta_y = 0;
-			if (input['KeyA']) {
+			if (typeof input['KeyA'] !== 'undefined' && input['KeyA']) {
 				delta_x -= 1;
 			}
-			if (input['KeyW']) {
+			if (typeof input['KeyW'] !== 'undefined' && input['KeyW']) {
 				delta_y -= 1;
 			}
-			if (input['KeyD']) {
+			if (typeof input['KeyD'] !== 'undefined' && input['KeyD']) {
 				delta_x += 1;
 			}
-			if (input['KeyS']) {
+			if (typeof input['KeyS'] !== 'undefined' && input['KeyS']) {
 				delta_y += 1;
 			}
-			player.dir = input['Dir'];
+			if (typeof input['Dir'] !== 'undefined') {
+				player.dir = input['Dir'];
+			}
 			player.move(delta_x*player.speed,delta_y*player.speed);
 			
-			if (input['lMBDown'] && player.isWeaponReady()) {
+			if (typeof input['lMBDown'] !== 'undefined' && input['lMBDown'] && player.isWeaponReady()) {
 				var bullet = player.useWeapon();
-				if (bullet !== null) {
-					this.bullets[this.currBulletID++] = bullet;
-				}
+				this.bullets.push(bullet);
+				this.newBullets.push(bullet);
 			}
+			
+			this.processedInput[this.translationTable] = true;
 		}
 	}
 
 	removePlayer(playerSID) {
 		delete this.players[this.translationTable[playerSID]];
+		delete this.processedInput[this.translationTable[playerSID]];
 		delete this.translationTable[playerSID];
 	}
 }
@@ -404,13 +405,15 @@ server.listen(8080, function() {
 // Add the WebSocket handlers
 io.on('connection', function(socket) {
 	socket.on('new_player', function() {
+		//Danger of not adding the player in case of potential packet loss, causing player(s) to not see the newly added player or bullets
 		game_board.addPlayer(socket.id);
-		socket.emit('game_state', {players: game_board.players, bullets: game_board.bullets}, game_board.translationTable[socket.id]);
+		socket.emit('game_state', {players: game_board.players, bullets: game_board.bullets}, game_board.currPlayerID - 1);
 	});
 	
 	socket.on('player_input', function(input) {
-		//Could be abused by increasing setInterval to lower values, sending input faster and therefore example move faster
-		//Server can be fricked by sending empty input object & probably get request spammed
+		//Fix picking items, fix moving "camera" around when experiencing lag
+		//Should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets etc.
+		//Server does count/work with network delay (very poor experience)
 		game_board.processInput(socket.id, input);
 	});
 

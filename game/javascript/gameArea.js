@@ -14,16 +14,17 @@ class gameArea{
 		this.yOffset = -this.canvas.height/2;
 		this.inRangeItemIndex = -1;
 		this.pickItem = false;
+
 		this.players = {};
 		for (var playerID in game_state.players) {
 			this.players[playerID] = new player(game_state.players[playerID].x, game_state.players[playerID].y);
 		}
 
-		this.bullets = {};
-		for (var bulletID in game_state.bullets) {
-			this.bullets[bulletID] = new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]);
+		this.bullets = [];
+		for (var i = 0; i < game_state.bullets.length; i++) {
+			this.bullets.push(new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]));
 		}
-		this.input = {'KeyW':false, 'KeyA':false, 'KeyS':false, 'KeyD':false, 'KeyF':false, 'lMBDown':false, 'Dir':this.players[this.myCharacterID].dir};
+		this.input = {'Dir':this.players[this.myCharacterID].dir};
 		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
 		this.interval = setInterval(this.update.bind(this), 1000/60);
 	}
@@ -63,19 +64,19 @@ class gameArea{
 		for (var i = 0; i < this.items.length; i++) {
 			this.items[i].update(this.context);
 		}
-		for (var bulletID in this.bullets) {
-			var bullet = this.bullets[bulletID];
+		for (var i = 0; i < this.bullets.length; i++) {
+			var bullet = this.bullets[i];
 			if (!bullet.hasExpired()) {
 				bullet.update(this.context);
 				for (var playerID in this.players) {
 					if (this.players[playerID].isHit(bullet)){
 						this.players[playerID].health -= (bullet.dmg);
-						delete this.bullets[bulletID];
+						this.bullets.splice(i,1);
 						break;
 					}
 				}
 			} else {
-				delete this.bullets[bulletID];
+				this.bullets.splice(i,1);
 			}
 		}
 
@@ -98,16 +99,16 @@ class gameArea{
 			// Character movement
 			var delta_x = 0;
 			var delta_y = 0;
-			if (this.input['KeyA']) {
+			if (typeof this.input['KeyA'] !== 'undefined' && this.input['KeyA']) {
 				delta_x -= 1;
 			}
-			if (this.input['KeyW']) {
+			if (typeof this.input['KeyW'] !== 'undefined' && this.input['KeyW']) {
 				delta_y -= 1;
 			}
-			if (this.input['KeyD']) {
+			if (typeof this.input['KeyD'] !== 'undefined' && this.input['KeyD']) {
 				delta_x += 1;
 			}
-			if (this.input['KeyS']) {
+			if (typeof this.input['KeyS'] !== 'undefined' && this.input['KeyS']) {
 				delta_y += 1;
 			}
 			var pSpeed = this.players[this.myCharacterID].speed;
@@ -115,14 +116,6 @@ class gameArea{
 			delta_y *= pSpeed;
 			this.players[this.myCharacterID].move(delta_x,delta_y);
 			this.moveScreenBy(delta_x,delta_y);
-			/*
-			if (this.input['lMBDown'] && this.players[this.myCharacterID].isWeaponReady()) {
-				var bullet = this.players[this.myCharacterID].useWeapon();
-				if (bullet !== null) {
-					this.bullets.push(bullet);
-				}
-			}
-			*/
 		}
 	}
 
@@ -173,38 +166,30 @@ class gameArea{
 		socket.emit('player_input', this.input);
 	}
 
-	update_game (game_state_update) {
-		for (var playerID in game_state_update.players) {
-			var serverPlayer = game_state_update.players[playerID];
+	update_game (game_update) {
+		for (var playerID in game_update.players) {
+			var serverPlayer = game_update.players[playerID];
+			var clientPlayer = this.players[playerID];
 			
-			if (this.players[playerID] === undefined) {
-				this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
-				this.players[playerID].dir = serverPlayer._dir;
+			if (typeof clientPlayer === 'undefined') {
+				clientPlayer = new player(serverPlayer.x,serverPlayer.y);
+				clientPlayer.dir = serverPlayer._dir;
 			} else {
-				this.players[playerID].x = serverPlayer.x;
-				this.players[playerID].y = serverPlayer.y;
-				this.players[playerID].dir = serverPlayer._dir;
+				clientPlayer.x = serverPlayer.x;
+				clientPlayer.y = serverPlayer.y;
+				clientPlayer.dir = serverPlayer._dir;
 			}
 		}
 
 		for (var playerID in this.players) {
-			if (game_state_update.players[playerID] === undefined) {
+			if (typeof game_update.players[playerID] === 'undefined') {
 				delete this.players[playerID];
 			}
 		}
 
-		for (var bulletID in game_state_update.bullets) {
-			var serverBullet = game_state_update.bullets[bulletID];
-			
-			if (this.bullets[bulletID] === undefined) {
-				this.bullets[bulletID] = new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]);
-			}
-		}
-
-		for (var bulletID in this.bullets) {
-			if (game_state_update.bullets[bulletID] === undefined) {
-				delete this.bullets[bulletID];
-			}
+		for (var i = 0; i < game_update.newBullets.length; i++) {
+			var serverBullet = game_update.newBullets[i];
+			this.bullets.push(new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]));
 		}
 	}
 }

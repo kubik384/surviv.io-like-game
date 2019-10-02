@@ -58,10 +58,7 @@ class player extends gameObject {
 	}
 
 	useWeapon () {
-		if (this.weapons[0] !== null) {
-			return this.weapons[0].use();
-		}
-		return null;
+		return this.weapons[0].use();
 	}
 
 	isWeaponReady () {
