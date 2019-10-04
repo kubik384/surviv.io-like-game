@@ -10,8 +10,8 @@ class gameArea{
 		this.myCharacterID = myCharacterID;
 		this._xOffset = 0;
 		this._yOffset = 0;
-		this.xOffset = game_state.players[myCharacterID].x - this.canvas.width/2;
-		this.yOffset = game_state.players[myCharacterID].y - this.canvas.height/2;
+		this.xOffset = game_state.players[this.myCharacterID].x - this.canvas.width/2;
+		this.yOffset = game_state.players[this.myCharacterID].y - this.canvas.height/2;
 		this.inRangeItemIndex = -1;
 		this.pickItem = false;
 
@@ -28,6 +28,10 @@ class gameArea{
 		this.input = {'Dir':this.players[this.myCharacterID].dir};
 		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
 		this.latencyText = new interface_text(5, 20, 'Ping: infinite', '20px Arial', 'left', "rgb(0,0,0)");
+		this.hpBar = new rectangle(this.canvas.width/2 - 200, this.canvas.height - 100, 400, 30, 'rgb(255,255,255)', 1);
+		this.removedHPBar = new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(255,0,0)', 1);
+		this.missingHPBar = new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(0,0,0)', 1);
+		this.removedHPTimestamp = 0;
 		this.interval = setInterval(this.update.bind(this), 1000/60);
 	}
 
@@ -74,6 +78,12 @@ class gameArea{
 					if (this.players[playerID].isHit(bullet)){
 						this.players[playerID].health -= (bullet.dmg);
 						this.bullets.splice(i,1);
+						if (playerID == this.myCharacterID) {
+							this.hpBar.width -= bullet.dmg * 4;
+							this.removedHPBar.width += bullet.dmg * 4;
+							this.removedHPBar.xOffset -= bullet.dmg * 4;
+							this.removedHPTimestamp = Date.now();
+						}
 						break;
 					}
 				}
@@ -82,7 +92,17 @@ class gameArea{
 			}
 		}
 
+		if (this.removedHPTimestamp !== 0 && Date.now() - this.removedHPTimestamp> 2000) {
+			this.missingHPBar.width += this.removedHPBar.width;
+			this.missingHPBar.xOffset = this.removedHPBar.xOffset;
+			this.removedHPBar.width = 0;
+			this.removedHPTimestamp = 0;
+		}
+
 		this.latencyText.update(this.context, this.xOffset, this.yOffset);
+		this.removedHPBar.update(this.context, this.xOffset, this.yOffset);
+		this.missingHPBar.update(this.context, this.xOffset, this.yOffset);
+		this.hpBar.update(this.context, this.xOffset, this.yOffset);
 
 		this.processInput();
 		this.sendInput();

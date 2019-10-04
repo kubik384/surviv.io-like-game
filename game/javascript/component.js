@@ -105,10 +105,9 @@ class rectangle extends shape {
 	}
 }
 
-class interface_text {
-	constructor(x, y, text, font = "20px Arial", textAlign = 'center', fillStyle = "rgb(255,255,255)", stroke = false, strokeColor = "rgb(255,255,255)", angle = 0) {
-		this.x = x;
-		this.y = y;
+class interface_text extends component {
+	constructor(xOffset, yOffset, text, font = "20px Arial", textAlign = 'center', fillStyle = "rgb(255,255,255)", stroke = false, strokeColor = "rgb(255,255,255)", angle = 0) {
+		super(xOffset, yOffset);
 		this.text = text;
 		this.font = font;
 		this.textAlign = textAlign;
@@ -118,7 +117,7 @@ class interface_text {
 		this.angle = angle;
 	}
 
-	update(ctx, xOffset = 0, yOffset = 0, rotCenterPoint = {x:0,y:0}) {
+	update(ctx, x, y, rotCenterPoint = {x:0,y:0}) {
 		if (this.angle != 0) {
 			ctx.save();
 			ctx.translate(rotCenterPoint.x, rotCenterPoint.y);
@@ -134,10 +133,10 @@ class interface_text {
 		ctx.textAlign = this.textAlign;
 		if (this.stroke) {
 			ctx.strokeStyle = this.strokeColor;
-			ctx.strokeText(this.text, this.x + xOffset, this.y + yOffset);
+			ctx.strokeText(this.text, x + this.xOffset, y + this.yOffset);
 		} else {
 			ctx.fillStyle = this.fillStyle;
-			ctx.fillText(this.text, this.x + xOffset, this.y + yOffset);
+			ctx.fillText(this.text, x + this.xOffset, y + this.yOffset);
 		}
 		if (this.angle != 0) {
 			ctx.restore();

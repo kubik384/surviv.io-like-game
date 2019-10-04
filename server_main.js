@@ -413,9 +413,9 @@ io.on('connection', function(socket) {
 		//Should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
 		//Server does count/work with network delay (very poor experience)
 		//Zoom
-		//HP, latency text
 		//on resize change canvas size and center character in, change also zoom
 		//Make dead sign, cliclable start over again, get rid of errors which occur after death
+		//make an hp removal animation + update player hp from game_updates for sync
 		game_board.processInput(socket.id, input);
 	});
 
