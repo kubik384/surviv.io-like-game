@@ -42,6 +42,6 @@ function start_game(game_state, myCharacterID) {
 
 	socket.on('pong', function(ms) {
 		latency = ms;
-		console.log('Player ping: ' + latency);
+		selectedCanvas.latencyText.text = 'Ping: ' + ms + 'ms';
 	});
 }

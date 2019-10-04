@@ -105,6 +105,46 @@ class rectangle extends shape {
 	}
 }
 
+class interface_text {
+	constructor(x, y, text, font = "20px Arial", textAlign = 'center', fillStyle = "rgb(255,255,255)", stroke = false, strokeColor = "rgb(255,255,255)", angle = 0) {
+		this.x = x;
+		this.y = y;
+		this.text = text;
+		this.font = font;
+		this.textAlign = textAlign;
+		this.fillStyle = fillStyle;
+		this.stroke = stroke;
+		this.strokeColor = strokeColor;
+		this.angle = angle;
+	}
+
+	update(ctx, xOffset = 0, yOffset = 0, rotCenterPoint = {x:0,y:0}) {
+		if (this.angle != 0) {
+			ctx.save();
+			ctx.translate(rotCenterPoint.x, rotCenterPoint.y);
+			if (this.angle < 0) {
+				ctx.rotate((this.angle + ((Math.abs(this.angle) - 90) * 2)) * Math.PI/180);
+			} else
+			{
+				ctx.rotate((this.angle - ((Math.abs(this.angle) - 90) * 2)) * Math.PI/180);
+			}
+			ctx.translate(-rotCenterPoint.x, -rotCenterPoint.y);
+		}
+		ctx.font = this.font;
+		ctx.textAlign = this.textAlign;
+		if (this.stroke) {
+			ctx.strokeStyle = this.strokeColor;
+			ctx.strokeText(this.text, this.x + xOffset, this.y + yOffset);
+		} else {
+			ctx.fillStyle = this.fillStyle;
+			ctx.fillText(this.text, this.x + xOffset, this.y + yOffset);
+		}
+		if (this.angle != 0) {
+			ctx.restore();
+		}
+	}
+}
+
 class img extends component {
 	constructor () {
 	}

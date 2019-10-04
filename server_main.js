@@ -415,6 +415,7 @@ io.on('connection', function(socket) {
 		//Zoom
 		//HP, latency text
 		//on resize change canvas size and center character in, change also zoom
+		//Make dead sign, cliclable start over again, get rid of errors which occur after death
 		game_board.processInput(socket.id, input);
 	});
 

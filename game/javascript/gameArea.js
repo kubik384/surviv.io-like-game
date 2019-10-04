@@ -27,6 +27,7 @@ class gameArea{
 		}
 		this.input = {'Dir':this.players[this.myCharacterID].dir};
 		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
+		this.latencyText = new interface_text(5, 20, 'Ping: infinite', '20px Arial', 'left', "rgb(0,0,0)");
 		this.interval = setInterval(this.update.bind(this), 1000/60);
 	}
 
@@ -80,6 +81,8 @@ class gameArea{
 				this.bullets.splice(i,1);
 			}
 		}
+
+		this.latencyText.update(this.context, this.xOffset, this.yOffset);
 
 		this.processInput();
 		this.sendInput();
@@ -173,8 +176,8 @@ class gameArea{
 			var clientPlayer = this.players[playerID];
 			
 			if (typeof clientPlayer === 'undefined') {
-				clientPlayer = new player(serverPlayer.x,serverPlayer.y);
-				clientPlayer.dir = serverPlayer._dir;
+				this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
+				this.players[playerID].dir = serverPlayer._dir;
 			} else {
 				clientPlayer.x = serverPlayer.x;
 				clientPlayer.y = serverPlayer.y;
