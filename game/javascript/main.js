@@ -2,10 +2,16 @@
 
 var socket = io();
 var selectedCanvas;
+var latency;
 
+//Requests game_state from server
 function request_data() {
 	socket.emit('new_player');
 }
+//On server respond with game_state data call start_game
+socket.on('game_state', function(game_state, myCharacterID) {
+	start_game(game_state, myCharacterID);
+});
 
 function start_game(game_state, myCharacterID) {
 	selectedCanvas = new gameArea(game_state, myCharacterID);
@@ -29,13 +35,13 @@ function start_game(game_state, myCharacterID) {
 		selectedCanvas.mouseMove(e);
 	});
 	socket.on('game_update', selectedCanvas.update_game.bind(selectedCanvas));
+	
+	socket.on('message', function(data) {
+		console.log(data);
+	});
+
+	socket.on('pong', function(ms) {
+		latency = ms;
+		console.log('Player ping: ' + latency);
+	});
 }
-
-// --- Events listeners --- //
-
-socket.on('message', function(data) {
-	console.log(data);
-});
-socket.on('game_state', function(game_state, myCharacterID) {
-	start_game(game_state, myCharacterID);
-});

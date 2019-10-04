@@ -10,8 +10,8 @@ class gameArea{
 		this.myCharacterID = myCharacterID;
 		this._xOffset = 0;
 		this._yOffset = 0;
-		this.xOffset = -this.canvas.width/2;
-		this.yOffset = -this.canvas.height/2;
+		this.xOffset = game_state.players[myCharacterID].x - this.canvas.width/2;
+		this.yOffset = game_state.players[myCharacterID].y - this.canvas.height/2;
 		this.inRangeItemIndex = -1;
 		this.pickItem = false;
 
@@ -22,6 +22,7 @@ class gameArea{
 
 		this.bullets = [];
 		for (var i = 0; i < game_state.bullets.length; i++) {
+			var serverBullet = game_state.bullets[i];
 			this.bullets.push(new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]));
 		}
 		this.input = {'Dir':this.players[this.myCharacterID].dir};
@@ -185,6 +186,11 @@ class gameArea{
 			if (typeof game_update.players[playerID] === 'undefined') {
 				delete this.players[playerID];
 			}
+		}
+
+		if (game_update.players[this.myCharacterID] !== 'undefined') {
+			this.xOffset = game_update.players[this.myCharacterID].x - this.canvas.width/2;
+			this.yOffset = game_update.players[this.myCharacterID].y - this.canvas.height/2;
 		}
 
 		for (var i = 0; i < game_update.newBullets.length; i++) {

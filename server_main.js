@@ -389,7 +389,7 @@ var path = require('path');
 var socketIO = require('socket.io');
 var app = express();
 var server = http.Server(app);
-var io = socketIO(server);
+var io = require('socket.io')(server, {pingInterval: 1500});
 var game_board = new game_area();
 app.set('port', 8080);
 app.use('/game', express.static(__dirname + '/game'));// Routing
@@ -397,7 +397,7 @@ app.get('/', function(request, response) {
   response.sendFile(path.join(__dirname + '/game', 'index.html'));
 });
 
-// Starts the server.
+// Starts the server
 server.listen(8080, function() {
 	console.log('Starting server on port 8080');
 });
@@ -405,15 +405,16 @@ server.listen(8080, function() {
 // Add the WebSocket handlers
 io.on('connection', function(socket) {
 	socket.on('new_player', function() {
-		//Danger of not adding the player in case of potential packet loss, causing player(s) to not see the newly added player or bullets
 		game_board.addPlayer(socket.id);
 		socket.emit('game_state', {players: game_board.players, bullets: game_board.bullets}, game_board.currPlayerID - 1);
 	});
 	
 	socket.on('player_input', function(input) {
-		//Fix picking items, fix moving "camera" around when experiencing lag
-		//Should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets etc.
+		//Should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
 		//Server does count/work with network delay (very poor experience)
+		//Zoom
+		//HP, latency text
+		//on resize change canvas size and center character in, change also zoom
 		game_board.processInput(socket.id, input);
 	});
 
