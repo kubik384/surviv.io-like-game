@@ -14,7 +14,19 @@ socket.on('game_state', function(game_state, myCharacterID) {
 });
 
 function start_game(game_state, myCharacterID) {
-	selectedCanvas = new gameArea(game_state, myCharacterID);
+	var canvas = document.createElement("canvas");
+	canvas.width = window.innerWidth;
+	canvas.height = window.innerHeight;
+	document.body.insertBefore(canvas, document.body.childNodes[0]);
+
+	selectedCanvas = new gameArea(canvas);
+	selectedCanvas.addInterface();
+	selectedCanvas.addPlayers(game_state.players);
+	selectedCanvas.addBullets(game_state.bullets);
+	selectedCanvas.addItems(game_state.items);
+	selectedCanvas.startGame(myCharacterID);
+
+	//Event handlers
 	window.addEventListener('keydown', function(e) {
 		selectedCanvas.keyDown(e);
 	});
@@ -34,6 +46,7 @@ function start_game(game_state, myCharacterID) {
 	window.addEventListener('mousemove', function(e) {
 		selectedCanvas.mouseMove(e);
 	});
+
 	socket.on('game_update', selectedCanvas.update_game.bind(selectedCanvas));
 	
 	socket.on('message', function(data) {

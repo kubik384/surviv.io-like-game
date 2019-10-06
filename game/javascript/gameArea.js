@@ -1,43 +1,77 @@
 "use strict";
 
 class gameArea{
-	constructor (game_state, myCharacterID) {
-		this.canvas = document.createElement("canvas");
-		this.canvas.width = window.innerWidth;
-		this.canvas.height = window.innerHeight;
-		document.body.insertBefore(this.canvas, document.body.childNodes[0]);
+	constructor (canvas, game_state, myCharacterID) {
+		this.canvas = canvas;
 		this.context = this.canvas.getContext("2d");
-		this.myCharacterID = myCharacterID;
 		this._xOffset = 0;
 		this._yOffset = 0;
-		this.xOffset = game_state.players[this.myCharacterID].x - this.canvas.width/2;
-		this.yOffset = game_state.players[this.myCharacterID].y - this.canvas.height/2;
 		this.inRangeItemIndex = -1;
 		this.pickItem = false;
-
+		this.input = {};
 		this.players = {};
-		for (var playerID in game_state.players) {
-			this.players[playerID] = new player(game_state.players[playerID].x, game_state.players[playerID].y);
-		}
-
+		this.items = {};
 		this.bullets = [];
-		for (var i = 0; i < game_state.bullets.length; i++) {
-			var serverBullet = game_state.bullets[i];
-			this.bullets.push(new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]));
-		}
-		this.input = {'Dir':this.players[this.myCharacterID].dir};
-		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
-		this.latencyText = new interface_text(5, 20, 'Ping: infinite', '20px Arial', 'left', "rgb(0,0,0)");
-		this.hpBar = new rectangle(this.canvas.width/2 - 200, this.canvas.height - 100, 400, 30, 'rgb(255,255,255)', 1);
-		this.removedHPBar = new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(255,0,0)', 1);
-		this.missingHPBar = new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(0,0,0)', 1);
-		this.removedHPTimestamp = 0;
-		this.interval = setInterval(this.update.bind(this), 1000/60);
+		this.userInterface;
+		this.myCharacter;
+		this.gameUpdateInterval;
 	}
 
+	set xOffset(value) {
+		this.context.translate(this._xOffset - value, 0);
+		this._xOffset = value;
+		
+	}
 
-	static clear (ctx,xOffset,yOffset,canvasWidth,canvasHeight) {
-		ctx.clearRect(xOffset, yOffset, canvasWidth, canvasHeight);
+	get xOffset() {
+		return this._xOffset;
+	}
+
+	set yOffset(value) {
+		this.context.translate(0,this._yOffset - value);
+		this._yOffset = value;
+	}
+
+	get yOffset() {
+		return this._yOffset;
+	}
+
+	addInterface() {
+		this.userInterface = new userInterface([new interface_text(5, 20, 'Ping: checking', '20px Arial', 'left', "rgb(0,0,0)"), new rectangle(this.canvas.width/2 - 200, this.canvas.height - 100, 400, 30, 'rgb(255,255,255)', 1), new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(255,0,0)', 1), new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(0,0,0)', 1)]);
+	}
+
+	addPlayers(players) {
+		for (var playerID in players) {
+			this.players[playerID] = new player(players[playerID].x, players[playerID].y);
+		}
+	}
+
+	addBullets(bullets) {
+		for (var i = 0; i < bullets.length; i++) {
+			this.bullets.push(new bullets[i](bullets[i].x, bullets[i].y, bullets[i].vector, bullets[i].speed, bullets[i].dmg, bullets[i].slowdown, bullets[i].lifetime, [new circle(0, 0, 7, "black")]));
+		}
+	}
+
+	addItems(items) {
+		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
+	}
+
+	startGame(myCharacterID) {
+		this.myCharacter = this.players[myCharacterID];
+		this.centerScreenOnPlayer();
+		this.dir['Dir'] = this.myCharacter.dir;
+		
+		this.gameUpdateInterval = setInterval(this.update.bind(this), 1000/60);
+	}
+
+	moveScreenBy (x,y) {
+		this.xOffset += x;
+		this.yOffset += y;
+	}
+
+	centerScreenOnPlayer () {
+		this.xOffset = this.myCharacter.x - this.canvas.width/2;
+		this.yOffset = this.myCharacter.y - this.canvas.height/2;
 	}
 
 	update () {
@@ -143,29 +177,11 @@ class gameArea{
 		}
 	}
 
-	moveScreenBy (x,y) {
-		this.xOffset += x;
-		this.yOffset += y;
+	sendInput () {
+		socket.emit('player_input', this.input);
 	}
 
-	set xOffset(value) {
-		this.context.translate(this._xOffset - value,0);
-		this._xOffset = value;
-		
-	}
 
-	get xOffset() {
-		return this._xOffset;
-	}
-
-	set yOffset(value) {
-		this.context.translate(0,this._yOffset - value);
-		this._yOffset = value;
-	}
-
-	get yOffset() {
-		return this._yOffset;
-	}
 
 	keyUp (e) {
 		this.input[e.code] = false;
@@ -184,10 +200,6 @@ class gameArea{
 		this.players[this.myCharacterID].dir = angleFromVec({x:this.players[this.myCharacterID].x + this.players[this.myCharacterID].body.xOffset, y:this.players[this.myCharacterID].y + this.players[this.myCharacterID].body.yOffset}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY});
 		this.players[this.myCharacterID].dir -= (this.players[this.myCharacterID].dir !== -180 ? -180 : 0);
 		this.input['Dir'] = this.players[this.myCharacterID].dir;
-	}
-
-	sendInput () {
-		socket.emit('player_input', this.input);
 	}
 
 	update_game (game_update) {
@@ -220,5 +232,9 @@ class gameArea{
 			var serverBullet = game_update.newBullets[i];
 			this.bullets.push(new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]));
 		}
+	}
+
+	static clear (ctx,xOffset,yOffset,canvasWidth,canvasHeight) {
+		ctx.clearRect(xOffset, yOffset, canvasWidth, canvasHeight);
 	}
 }

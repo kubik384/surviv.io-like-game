@@ -407,7 +407,7 @@ io.on('connection', function(socket) {
 	socket.on('new_player', function() {
 		game_board.addPlayer(socket.id);
 		socket.emit('game_state', {players: game_board.players, bullets: game_board.bullets}, game_board.currPlayerID - 1);
-	});
+	}); 
 	
 	socket.on('player_input', function(input) {
 		//Should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
