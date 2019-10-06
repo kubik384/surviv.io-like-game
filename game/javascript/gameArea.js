@@ -40,15 +40,18 @@ class gameArea{
 		this.userInterface = new userInterface([new interface_text(5, 20, 'Ping: checking', '20px Arial', 'left', "rgb(0,0,0)"), new rectangle(this.canvas.width/2 - 200, this.canvas.height - 100, 400, 30, 'rgb(255,255,255)', 1), new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(255,0,0)', 1), new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(0,0,0)', 1)]);
 	}
 
-	addPlayers(players) {
+	addPlayers(players, myCharacterID) {
 		for (var playerID in players) {
 			this.players[playerID] = new player(players[playerID].x, players[playerID].y);
 		}
+		this.myCharacter = this.players[myCharacterID];
+		this.centerScreenOnPlayer();
+		this.input['Dir'] = this.myCharacter.dir;
 	}
 
 	addBullets(bullets) {
 		for (var i = 0; i < bullets.length; i++) {
-			this.bullets.push(new bullets[i](bullets[i].x, bullets[i].y, bullets[i].vector, bullets[i].speed, bullets[i].dmg, bullets[i].slowdown, bullets[i].lifetime, [new circle(0, 0, 7, "black")]));
+			this.bullets.push(new bullet(bullets[i].x, bullets[i].y, bullets[i].vector, bullets[i].speed, bullets[i].dmg, bullets[i].slowdown, bullets[i].lifetime, [new circle(0, 0, 7, "black")]));
 		}
 	}
 
@@ -56,104 +59,33 @@ class gameArea{
 		this.items = [new item(0, 0, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new item(50, 100, [new circle(0,0, 10, "black", 1, true, "rgb(255,255,255)")]), new ak47(400, 300), new um9(600, 600)];
 	}
 
-	startGame(myCharacterID) {
-		this.myCharacter = this.players[myCharacterID];
-		this.centerScreenOnPlayer();
-		this.dir['Dir'] = this.myCharacter.dir;
-		
+	startGame() {
 		this.gameUpdateInterval = setInterval(this.update.bind(this), 1000/60);
 	}
 
-	moveScreenBy (x,y) {
-		this.xOffset += x;
-		this.yOffset += y;
-	}
-
-	centerScreenOnPlayer () {
-		this.xOffset = this.myCharacter.x - this.canvas.width/2;
-		this.yOffset = this.myCharacter.y - this.canvas.height/2;
-	}
-
 	update () {
-		gameArea.clear(this.context,this.xOffset,this.yOffset,this.canvas.width,this.canvas.height);					
-		if (this.players[this.myCharacterID].isAlive()) {
-			// Shows pickup ui if near any item and pick it up if 'F' is input
-			this.inRangeItemIndex = -1;
-			for(i = 0; i < this.items.length; i++) {	
-				if (this.items[i].inRange(this.players[this.myCharacterID].x, this.players[this.myCharacterID].y)) {
-					document.getElementById("pick-item").innerHTML = this.items[i].name;
-					document.getElementById("ui-lower").style.display = "block";
-					this.inRangeItemIndex = i;
-					break;
-				}
-			}
-			if (this.inRangeItemIndex != -1) {
-				document.getElementById("ui-lower").style.display = "block";
-			} else if (document.getElementById("ui-lower").style.display == "block") {
-				document.getElementById("ui-lower").style.display = "none";
-			}
-		}
-
-		for (var playerID in this.players) {
-			if (this.players[playerID].isAlive()) {
-				this.players[playerID].update(this.context);
-			} else {
-				delete this.players[playerID];
-			}
-		}
-		for (var i = 0; i < this.items.length; i++) {
-			this.items[i].update(this.context);
-		}
-		for (var i = 0; i < this.bullets.length; i++) {
-			var bullet = this.bullets[i];
-			if (!bullet.hasExpired()) {
-				bullet.update(this.context);
-				for (var playerID in this.players) {
-					if (this.players[playerID].isHit(bullet)){
-						this.players[playerID].health -= (bullet.dmg);
-						this.bullets.splice(i,1);
-						if (playerID == this.myCharacterID) {
-							this.hpBar.width -= bullet.dmg * 4;
-							this.removedHPBar.width += bullet.dmg * 4;
-							this.removedHPBar.xOffset -= bullet.dmg * 4;
-							this.removedHPTimestamp = Date.now();
-						}
-						break;
-					}
-				}
-			} else {
-				this.bullets.splice(i,1);
-			}
-		}
-
-		if (this.removedHPTimestamp !== 0 && Date.now() - this.removedHPTimestamp> 2000) {
-			this.missingHPBar.width += this.removedHPBar.width;
-			this.missingHPBar.xOffset = this.removedHPBar.xOffset;
-			this.removedHPBar.width = 0;
-			this.removedHPTimestamp = 0;
-		}
-
-		this.latencyText.update(this.context, this.xOffset, this.yOffset);
-		this.removedHPBar.update(this.context, this.xOffset, this.yOffset);
-		this.missingHPBar.update(this.context, this.xOffset, this.yOffset);
-		this.hpBar.update(this.context, this.xOffset, this.yOffset);
-
+		gameArea.clear(this.context,this.xOffset,this.yOffset,this.canvas.width,this.canvas.height);
 		this.processInput();
+		this.updatePlayers();
+		this.updateItems();
+		this.updateBullets();
+		this.checkItemsInRange();
+		this.updateUserInterface();
 		this.sendInput();
 	}
 
 	processInput() {
 		if (this.pickItem) {
 			if (this.items[this.inRangeItemIndex] instanceof weapon) {
-				this.players[this.myCharacterID].pickWeapon(this.items.splice(this.inRangeItemIndex,1)[0]);
+				this.myCharacter.pickWeapon(this.items.splice(this.inRangeItemIndex,1)[0]);
 			} else {
 				var itemPick = this.items.splice(this.inRangeItemIndex,1)[0];
-				this.players[this.myCharacterID].pickItem(itemPick);
+				this.myCharacter.pickItem(itemPick);
 			}
 			this.pickItem = false;
 		}
 		
-		if (this.players[this.myCharacterID].isAlive()) {
+		if (this.myCharacter.isAlive()) {
 			// Character movement
 			var delta_x = 0;
 			var delta_y = 0;
@@ -169,18 +101,74 @@ class gameArea{
 			if (typeof this.input['KeyS'] !== 'undefined' && this.input['KeyS']) {
 				delta_y += 1;
 			}
-			var pSpeed = this.players[this.myCharacterID].speed;
+			var pSpeed = this.myCharacter.speed;
 			delta_x *= pSpeed;
 			delta_y *= pSpeed;
-			this.players[this.myCharacterID].move(delta_x,delta_y);
+			this.myCharacter.move(delta_x,delta_y);
 			this.moveScreenBy(delta_x,delta_y);
 		}
+	}
+
+	checkItemsInRange() {
+		if (this.myCharacter.isAlive()) {
+			this.inRangeItemIndex = -1;
+			for(var i = 0; i < this.items.length; i++) {	
+				if (this.items[i].inRange(this.myCharacter.x, this.myCharacter.y)) {
+					document.getElementById("pick-item").innerHTML = this.items[i].name;
+					document.getElementById("ui-lower").style.display = "block";
+					this.inRangeItemIndex = i;
+					break;
+				}
+			}
+			if (this.inRangeItemIndex != -1) {
+				document.getElementById("ui-lower").style.display = "block";
+			} else if (document.getElementById("ui-lower").style.display == "block") {
+				document.getElementById("ui-lower").style.display = "none";
+			}
+		}
+	}
+
+	updatePlayers() {
+		for (var playerID in this.players) {
+			if (this.players[playerID].isAlive()) {
+				this.players[playerID].update(this.context);
+			} else {
+				delete this.players[playerID];
+			}
+		}
+	}
+
+	updateItems() {
+		for (var i = 0; i < this.items.length; i++) {
+			this.items[i].update(this.context);
+		}
+	}
+
+	updateBullets() {
+		for (var i = 0; i < this.bullets.length; i++) {
+			var bullet = this.bullets[i];
+			if (!bullet.hasExpired()) {
+				bullet.update(this.context);
+				for (var playerID in this.players) {
+					if (this.players[playerID].isHit(bullet)) {
+						this.players[playerID].health -= (bullet.dmg);
+						this.bullets.splice(i,1);
+						break;
+					}
+				}
+			} else {
+				this.bullets.splice(i,1);
+			}
+		}
+	}
+
+	updateUserInterface() {
+		
 	}
 
 	sendInput () {
 		socket.emit('player_input', this.input);
 	}
-
 
 
 	keyUp (e) {
@@ -197,41 +185,94 @@ class gameArea{
 	}
 
 	mouseMove (e) {
-		this.players[this.myCharacterID].dir = angleFromVec({x:this.players[this.myCharacterID].x + this.players[this.myCharacterID].body.xOffset, y:this.players[this.myCharacterID].y + this.players[this.myCharacterID].body.yOffset}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY});
-		this.players[this.myCharacterID].dir -= (this.players[this.myCharacterID].dir !== -180 ? -180 : 0);
-		this.input['Dir'] = this.players[this.myCharacterID].dir;
+		this.myCharacter.dir = angleFromVec({x:this.myCharacter.x + this.myCharacter.body.xOffset, y:this.myCharacter.y + this.myCharacter.body.yOffset}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY});
+		this.myCharacter.dir -= (this.myCharacter.dir !== -180 ? -180 : 0);
+		this.input['Dir'] = this.myCharacter.dir;
 	}
 
-	update_game (game_update) {
-		for (var playerID in game_update.players) {
-			var serverPlayer = game_update.players[playerID];
-			var clientPlayer = this.players[playerID];
+	sync_data (game_update) {
+			this.playerSync(game_update.players);
+			this.itemSync(game_update.items);
+			this.bulletSync(game_update.newBullets);
+	}
+
+	playerSync(serverPlayers) {
+		if (typeof serverPlayers !== 'undefined') {
+			for (var playerID in serverPlayers) {
+				var serverPlayer = serverPlayers[playerID];
+				var clientPlayer = this.players[playerID];
+				
+				//Add new players
+				if (typeof clientPlayer === 'undefined') {
+					this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
+				}
+				//Update certain properties of existing players
+				if (playerID === this.myCharacterID) {
+					this.syncMyCharacter(serverPlayers[playerID]);
+				} else {
+					this.syncSinglePlayer(this.players[playerID], serverPlayers[playerID]);
+				}
+			}
+			//Delete removed players
+			for (var playerID in this.players) {
+				if (typeof serverPlayers[playerID] === 'undefined') {
+					if (playerID === this.myCharacterID) {
+						//gameover text
+						delete this.players[playerID]
+					} else {
+						delete this.players[playerID];
+					}
+				}
+			}
+		}
+	}
+
+	itemSync(items) {
+		if (typeof items !== 'undefined') {
 			
-			if (typeof clientPlayer === 'undefined') {
-				this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
-				this.players[playerID].dir = serverPlayer._dir;
-			} else {
-				clientPlayer.x = serverPlayer.x;
-				clientPlayer.y = serverPlayer.y;
-				clientPlayer.dir = serverPlayer._dir;
+		}
+	}
+	
+	bulletSync(newBullets) {
+		if (typeof newBullets !== 'undefined') {
+			for (var i = 0; i < newBullets.length; i++) {
+				var serverBullet = newBullets[i];
+				this.bullets.push(new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]));
 			}
 		}
+	}
 
-		for (var playerID in this.players) {
-			if (typeof game_update.players[playerID] === 'undefined') {
-				delete this.players[playerID];
+	syncSinglePlayer(clientPlayer, serverPlayer) {
+		for (var attribute in clientPlayer) {
+			if (clientPlayer[attribute] !== serverPlayer[attribute] && (attribute === 'x' || attribute === 'y' || attribute === 'health')) {
+				clientPlayer[attribute] = serverPlayer[attribute];
 			}
 		}
-
-		if (game_update.players[this.myCharacterID] !== 'undefined') {
-			this.xOffset = game_update.players[this.myCharacterID].x - this.canvas.width/2;
-			this.yOffset = game_update.players[this.myCharacterID].y - this.canvas.height/2;
+		clientPlayer.dir = serverPlayer._dir;
+	}
+	
+	syncMyCharacter(serverMyCharacter) {
+		if (this.myCharacter.health !== serverMyCharacter.health) {
+			//update interface
+			this.myCharacter.health = serverMyCharacter.health;
 		}
-
-		for (var i = 0; i < game_update.newBullets.length; i++) {
-			var serverBullet = game_update.newBullets[i];
-			this.bullets.push(new bullet(serverBullet.x, serverBullet.y, serverBullet.vector, serverBullet.speed, serverBullet.dmg, serverBullet.slowdown, serverBullet.lifetime, [new circle(0, 0, 7, "black")]));
+		
+		for (var attribute in this.myCharacter) {
+			if (this.myCharacter[attribute] !== serverMyCharacter[attribute] && (attribute === 'x' || attribute === 'y')) {
+				this.myCharacter[attribute] = serverMyCharacter[attribute];
+			}
 		}
+		this.centerScreenOnPlayer();
+	}
+	
+	moveScreenBy (x,y) {
+		this.xOffset += x;
+		this.yOffset += y;
+	}
+
+	centerScreenOnPlayer () {
+		this.xOffset = this.myCharacter.x - this.canvas.width/2;
+		this.yOffset = this.myCharacter.y - this.canvas.height/2;
 	}
 
 	static clear (ctx,xOffset,yOffset,canvasWidth,canvasHeight) {

@@ -416,6 +416,12 @@ io.on('connection', function(socket) {
 		//on resize change canvas size and center character in, change also zoom
 		//Make dead sign, cliclable start over again, get rid of errors which occur after death
 		//make an hp removal animation + update player hp from game_updates for sync
+
+		//finish userInterface (add coords when pressed hotkey + number of objects, items, fps, ping, etc.)
+		//update items from server
+		//clean code also on server side
+		//implement "f to take" into user interface
+		//test if everything works
 		game_board.processInput(socket.id, input);
 	});
 

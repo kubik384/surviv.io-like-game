@@ -2,7 +2,6 @@
 
 var socket = io();
 var selectedCanvas;
-var latency;
 
 //Requests game_state from server
 function request_data() {
@@ -21,12 +20,16 @@ function start_game(game_state, myCharacterID) {
 
 	selectedCanvas = new gameArea(canvas);
 	selectedCanvas.addInterface();
-	selectedCanvas.addPlayers(game_state.players);
+	selectedCanvas.addPlayers(game_state.players, myCharacterID);
 	selectedCanvas.addBullets(game_state.bullets);
 	selectedCanvas.addItems(game_state.items);
-	selectedCanvas.startGame(myCharacterID);
+	
+	addEventHandlers();
+	addServerEventHandlers();
+	selectedCanvas.startGame();
+}
 
-	//Event handlers
+function addEventHandlers() {
 	window.addEventListener('keydown', function(e) {
 		selectedCanvas.keyDown(e);
 	});
@@ -46,15 +49,16 @@ function start_game(game_state, myCharacterID) {
 	window.addEventListener('mousemove', function(e) {
 		selectedCanvas.mouseMove(e);
 	});
+}
 
-	socket.on('game_update', selectedCanvas.update_game.bind(selectedCanvas));
+function addServerEventHandlers() {
+	socket.on('game_update', selectedCanvas.sync_data.bind(selectedCanvas));
 	
 	socket.on('message', function(data) {
 		console.log(data);
 	});
 
 	socket.on('pong', function(ms) {
-		latency = ms;
-		selectedCanvas.latencyText.text = 'Ping: ' + ms + 'ms';
+		//selectedCanvas.latencyText.text = 'Ping: ' + ms + 'ms';
 	});
 }
