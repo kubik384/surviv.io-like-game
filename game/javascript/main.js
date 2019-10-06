@@ -59,6 +59,6 @@ function addServerEventHandlers() {
 	});
 
 	socket.on('pong', function(ms) {
-		//selectedCanvas.latencyText.text = 'Ping: ' + ms + 'ms';
+		selectedCanvas.userInterface.updateLatency('Ping: ' + ms + 'ms');
 	});
 }

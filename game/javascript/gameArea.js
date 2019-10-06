@@ -1,7 +1,7 @@
 "use strict";
 
 class gameArea{
-	constructor (canvas, game_state, myCharacterID) {
+	constructor (canvas) {
 		this.canvas = canvas;
 		this.context = this.canvas.getContext("2d");
 		this._xOffset = 0;
@@ -14,6 +14,7 @@ class gameArea{
 		this.bullets = [];
 		this.userInterface;
 		this.myCharacter;
+		this.myCharacterID;
 		this.gameUpdateInterval;
 	}
 
@@ -31,13 +32,14 @@ class gameArea{
 		this.context.translate(0,this._yOffset - value);
 		this._yOffset = value;
 	}
-
+	
 	get yOffset() {
 		return this._yOffset;
 	}
 
 	addInterface() {
-		this.userInterface = new userInterface([new interface_text(5, 20, 'Ping: checking', '20px Arial', 'left', "rgb(0,0,0)"), new rectangle(this.canvas.width/2 - 200, this.canvas.height - 100, 400, 30, 'rgb(255,255,255)', 1), new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(255,0,0)', 1), new rectangle(this.canvas.width/2 + 200, this.canvas.height - 100, 0, 30, 'rgb(0,0,0)', 1)]);
+		this.userInterface = new userInterface();
+		this.userInterface.build(this.canvas);
 	}
 
 	addPlayers(players, myCharacterID) {
@@ -45,6 +47,7 @@ class gameArea{
 			this.players[playerID] = new player(players[playerID].x, players[playerID].y);
 		}
 		this.myCharacter = this.players[myCharacterID];
+		this.myCharacterID = myCharacterID;
 		this.centerScreenOnPlayer();
 		this.input['Dir'] = this.myCharacter.dir;
 	}
@@ -152,6 +155,9 @@ class gameArea{
 				for (var playerID in this.players) {
 					if (this.players[playerID].isHit(bullet)) {
 						this.players[playerID].health -= (bullet.dmg);
+						if (playerID == this.myCharacterID) {
+							this.userInterface.updateHPBar(bullet.dmg);
+						}
 						this.bullets.splice(i,1);
 						break;
 					}
@@ -163,7 +169,7 @@ class gameArea{
 	}
 
 	updateUserInterface() {
-		
+		this.userInterface.update(this.context, this.xOffset, this.yOffset);
 	}
 
 	sendInput () {
@@ -207,11 +213,7 @@ class gameArea{
 					this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
 				}
 				//Update certain properties of existing players
-				if (playerID === this.myCharacterID) {
-					this.syncMyCharacter(serverPlayers[playerID]);
-				} else {
-					this.syncSinglePlayer(this.players[playerID], serverPlayers[playerID]);
-				}
+				this.syncSinglePlayer(this.players[playerID], serverPlayers[playerID]);
 			}
 			//Delete removed players
 			for (var playerID in this.players) {
@@ -225,6 +227,7 @@ class gameArea{
 				}
 			}
 		}
+		this.centerScreenOnPlayer();
 	}
 
 	itemSync(items) {
@@ -249,20 +252,6 @@ class gameArea{
 			}
 		}
 		clientPlayer.dir = serverPlayer._dir;
-	}
-	
-	syncMyCharacter(serverMyCharacter) {
-		if (this.myCharacter.health !== serverMyCharacter.health) {
-			//update interface
-			this.myCharacter.health = serverMyCharacter.health;
-		}
-		
-		for (var attribute in this.myCharacter) {
-			if (this.myCharacter[attribute] !== serverMyCharacter[attribute] && (attribute === 'x' || attribute === 'y')) {
-				this.myCharacter[attribute] = serverMyCharacter[attribute];
-			}
-		}
-		this.centerScreenOnPlayer();
 	}
 	
 	moveScreenBy (x,y) {
