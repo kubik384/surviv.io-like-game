@@ -15,7 +15,6 @@ class gameArea{
 		this.userInterface;
 		this.myCharacter;
 		this.myCharacterID;
-		this.gameUpdateInterval;
 		this.numberOfUpdates = 0;
 		this.updateTimestamp = 0;
 	}
@@ -64,64 +63,28 @@ class gameArea{
 	}
 
 	startGame() {
-		this.gameUpdateInterval = setInterval(this.update.bind(this), 1000/60);
+		this.update();
 	}
 
 	update () {
 		gameArea.clear(this.context,this.xOffset,this.yOffset,this.canvas.width,this.canvas.height);
-		this.processInput();
-		this.updatePlayers();
 		this.updateItems();
 		this.updateBullets();
+		this.updatePlayers();
 		this.checkItemsInRange();
 		this.updateUserInterface();
 		this.sendInput();
-		this.numberOfUpdates += 1;
+		this.numberOfUpdates++;
 		if (this.updateTimestamp === 0) {
 			this.updateTimestamp = Date.now();
 		} else {
-			if (Date.now() - this.updateTimestamp > 1000) {
+			if (Date.now() - this.updateTimestamp >= 1000) {
 				this.userInterface.updateFps(this.numberOfUpdates);
 				this.updateTimestamp = 0;
 				this.numberOfUpdates = 0;
 			}
 		}
-		
-	}
-
-	processInput() {
-		if (this.pickItem) {
-			if (this.items[this.inRangeItemIndex] instanceof weapon) {
-				this.myCharacter.pickWeapon(this.items.splice(this.inRangeItemIndex,1)[0]);
-			} else {
-				var itemPick = this.items.splice(this.inRangeItemIndex,1)[0];
-				this.myCharacter.pickItem(itemPick);
-			}
-			this.pickItem = false;
-		}
-		
-		if (this.myCharacter.isAlive()) {
-			// Character movement
-			var delta_x = 0;
-			var delta_y = 0;
-			if (typeof this.input['KeyA'] !== 'undefined' && this.input['KeyA']) {
-				delta_x -= 1;
-			}
-			if (typeof this.input['KeyW'] !== 'undefined' && this.input['KeyW']) {
-				delta_y -= 1;
-			}
-			if (typeof this.input['KeyD'] !== 'undefined' && this.input['KeyD']) {
-				delta_x += 1;
-			}
-			if (typeof this.input['KeyS'] !== 'undefined' && this.input['KeyS']) {
-				delta_y += 1;
-			}
-			var pSpeed = this.myCharacter.speed;
-			delta_x *= pSpeed;
-			delta_y *= pSpeed;
-			this.myCharacter.move(delta_x,delta_y);
-			this.moveScreenBy(delta_x,delta_y);
-		}
+		setTimeout(this.update.bind(this), 1000/60);
 	}
 
 	checkItemsInRange() {

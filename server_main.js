@@ -273,7 +273,6 @@ class player extends game_object {
 
 class game_area {
 	constructor () {
-		this.interval = setInterval(this.update.bind(this), 1000/60);
 		this.players = {};
 		this.items = {};
 		this.bullets = [];
@@ -282,6 +281,8 @@ class game_area {
 		this.processedInput = {};
 		this.currPlayerID = 0;
 		this.currItemID = 0;
+		this.updateTimestamp = 0;
+		this.numberOfUpdates = 0;
 	}
 
 	update() {
@@ -321,6 +322,18 @@ class game_area {
 			}
 		}
 		this.newBullets = [];
+
+		this.numberOfUpdates++;
+		if (this.updateTimestamp === 0) {
+			this.updateTimestamp = Date.now();
+		} else {
+			if (Date.now() - this.updateTimestamp >= 1000) {
+				console.log('Current FPS: ' + this.numberOfUpdates);
+				this.updateTimestamp = 0;
+				this.numberOfUpdates = 0;
+			}
+		}
+		setTimeout(this.update.bind(this), 1000/60);
 	}
 
 	addPlayer(playerSID) {
@@ -393,6 +406,7 @@ var app = express();
 var server = http.Server(app);
 var io = require('socket.io')(server, {pingInterval: 1500});
 var game_board = new game_area();
+game_board.update();
 app.set('port', 8080);
 app.use('/game', express.static(__dirname + '/game'));// Routing
 app.get('/', function(request, response) {
@@ -412,22 +426,19 @@ io.on('connection', function(socket) {
 	}); 
 	
 	socket.on('player_input', function(input) {
-		//Should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
-		//Make 0.2 second delay between input and proccessing the input - window for people with higher ping? (the data server sends would have been proccessed 0.2 sec before), keep each frame saved and ready for being updated, chose which frame to update according to how long it took the input to arrive
-		//Zoom
+		//should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
+		//add zoom
 		//on resize change canvas size and center character in, change also zoom
-		//Make gameOver sign, clickable start over again, get rid of errors which occur after death
+		//make gameOver sign, clickable start over again, get rid of errors which occur after death
 		//minimap, game boundries
-		//Add sounds + fulscreen button
-		//fullscreen button
+		//add sounds + fulscreen button
 		//implement "f to take" into user interface
 		//replace dead player with some image indicating place of death
 		//remake components so I can also only stroke and not fill. Also, add rounded corners to rectangle
 		//add zombies - make it into a coop?
 		//add fictitious force for each (movable) object
-		//add possibility to add shadow to components
 		//add 0's before x and y to prevent the text moving each time order of magnitude is increased
-		//figure out why there are 64 fps instead of 60
+		//update rest of the player on server and make client only render
 		game_board.processInput(socket.id, input);
 	});
 

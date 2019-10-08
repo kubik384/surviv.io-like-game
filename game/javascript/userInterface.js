@@ -34,6 +34,12 @@ class userInterface {
     updateHPBar (currHP, HPChange, maxHP) {
         this.HPBar.updateHP(currHP, HPChange, maxHP);
     }
+    
+    toggleDebugOverlay() {
+        this.coords.display = (this.coords.display ? false : true);
+        this.fps.display = (this.fps.display ? false : true);
+        this.latency.display = (this.latency.display ? false : true);
+    }
 }
 
 class HPBar {

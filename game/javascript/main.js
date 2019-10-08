@@ -31,6 +31,10 @@ function start_game(game_state, myCharacterID) {
 
 function addEventHandlers() {
 	window.addEventListener('keydown', function(e) {
+		if (e.code === 'F3') {
+			e.preventDefault();
+			selectedCanvas.userInterface.toggleDebugOverlay();
+		}
 		selectedCanvas.keyDown(e);
 	});
 	window.addEventListener('keyup', function(e) {
