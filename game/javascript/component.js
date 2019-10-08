@@ -91,11 +91,11 @@ class rectangle extends shape {
 			ctx.translate(-rotCenterPoint.x, -rotCenterPoint.y);
 		}
 		ctx.beginPath();
-		ctx.lineWidth = this.lineWidth;
-		ctx.fillStyle = this.fillColor;
 		ctx.rect(x + this.xOffset, y + this.yOffset, this.width, this.height); 
+		ctx.fillStyle = this.fillColor;	
 		ctx.fill();
 		if (this.stroke) {
+			ctx.lineWidth = this.lineWidth;
 			ctx.strokeStyle = this.strokeColor;
 			ctx.stroke();
 		}

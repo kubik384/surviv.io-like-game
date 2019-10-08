@@ -19,8 +19,8 @@ function start_game(game_state, myCharacterID) {
 	document.body.insertBefore(canvas, document.body.childNodes[0]);
 
 	selectedCanvas = new gameArea(canvas);
-	selectedCanvas.addInterface();
 	selectedCanvas.addPlayers(game_state.players, myCharacterID);
+	selectedCanvas.addInterface();
 	selectedCanvas.addBullets(game_state.bullets);
 	selectedCanvas.addItems(game_state.items);
 	
@@ -59,6 +59,6 @@ function addServerEventHandlers() {
 	});
 
 	socket.on('pong', function(ms) {
-		selectedCanvas.userInterface.updateLatency('Ping: ' + ms + 'ms');
+		selectedCanvas.userInterface.updateLatency(ms);
 	});
 }

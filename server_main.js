@@ -210,6 +210,7 @@ class player extends game_object {
 		this.weapons[0].pickUp();
 		this.ammo = [];
 		this.health = 100;
+		this.maxHealth = 100;
 		this.speed = 10;
 		this.dir = 0;
 		this._dir;
@@ -284,6 +285,7 @@ class game_area {
 	}
 
 	update() {
+		var deadPlayers = [];
 		for (var i = 0; i < this.items.length; i++) {
 			this.items[i].update();
 		}
@@ -294,6 +296,9 @@ class game_area {
 				for (var playerID in this.players) {
 					if (this.players[playerID].isHit(this.bullets[i])) {
 						this.players[playerID].health -= (this.bullets[i].dmg);
+						if (!this.players[playerID].isAlive()) {
+							deadPlayers.push(playerID);
+						}
 						this.bullets.splice(i,1);
 						break;
 					}
@@ -304,19 +309,17 @@ class game_area {
 		}
 
 		for (var playerID in this.players) {
-			if (this.players[playerID].isAlive()) {
-				this.players[playerID].update();
-				this.processedInput[playerID] = false;
-			} else {
-				for (var pid in this.translationTable) {
-					if (this.translationTable[pid] === playerID) {
-						this.removePlayer(pid);
-						break;
-					}
+			this.players[playerID].update();
+			this.processedInput[playerID] = false;
+		}
+		io.sockets.emit('game_update', {players: this.players, newBullets: this.newBullets});
+		for (var i = 0; i < deadPlayers.length; i++) {
+			for (var playerSID in this.translationTable) {
+				if (this.translationTable[playerSID] === deadPlayers[i]) {
+					this.removePlayer(playerSID);
 				}
 			}
 		}
-		io.sockets.emit('game_update', {players: this.players, newBullets: this.newBullets});
 		this.newBullets = [];
 	}
 
@@ -386,7 +389,6 @@ function rotate(cx, cy, x, y, angle) {
 var express = require('express');
 var http = require('http');
 var path = require('path');
-var socketIO = require('socket.io');
 var app = express();
 var server = http.Server(app);
 var io = require('socket.io')(server, {pingInterval: 1500});
@@ -406,20 +408,26 @@ server.listen(8080, function() {
 io.on('connection', function(socket) {
 	socket.on('new_player', function() {
 		game_board.addPlayer(socket.id);
-		socket.emit('game_state', {players: game_board.players, bullets: game_board.bullets}, game_board.currPlayerID - 1);
+		socket.emit('game_state', {players: game_board.players, bullets: game_board.bullets}, (game_board.currPlayerID - 1).toString());
 	}); 
 	
 	socket.on('player_input', function(input) {
 		//Should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
-		//Server does count/work with network delay (very poor experience)
+		//Make 0.2 second delay between input and proccessing the input - window for people with higher ping? (the data server sends would have been proccessed 0.2 sec before), keep each frame saved and ready for being updated, chose which frame to update according to how long it took the input to arrive
 		//Zoom
 		//on resize change canvas size and center character in, change also zoom
-		//Make dead sign, cliclable start over again, get rid of errors which occur after death
-		//make an hp removal animation
+		//Make gameOver sign, clickable start over again, get rid of errors which occur after death
 		//minimap, game boundries
-
-		//finish userInterface (add coords when pressed hotkey + number of objects, items, fps, ping, version, etc.)
+		//Add sounds + fulscreen button
+		//fullscreen button
 		//implement "f to take" into user interface
+		//replace dead player with some image indicating place of death
+		//remake components so I can also only stroke and not fill. Also, add rounded corners to rectangle
+		//add zombies - make it into a coop?
+		//add fictitious force for each (movable) object
+		//add possibility to add shadow to components
+		//add 0's before x and y to prevent the text moving each time order of magnitude is increased
+		//figure out why there are 64 fps instead of 60
 		game_board.processInput(socket.id, input);
 	});
 

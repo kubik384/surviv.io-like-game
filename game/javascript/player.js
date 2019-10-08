@@ -2,7 +2,7 @@
 
 class player extends gameObject {
 	constructor (x, y) {
-		super(x, y, [new circle(0, 0, 30, "rgb(244, 217, 66)"), new circle(-24, -23, 10, "rgb(244, 217, 66)"), new circle(24, -23, 10, "rgb(244, 217, 66)")]);
+		super(x, y, [new circle(0, 0, 30, "rgb(248, 197, 116)"), new circle(-24, -23, 10, "rgb(248, 197, 116)"), new circle(24, -23, 10, "rgb(248, 197, 116)")]);
 		this.body = this.components[0];
 		this.lHand = this.components[1];
 		this.rHand = this.components[2];
@@ -11,6 +11,7 @@ class player extends gameObject {
 		this.weapons[0].pickUp(this.lHand, this.rHand);
 		this.ammo = [];
 		this.health = 100;
+		this.maxHealth = 100;
 		this.speed = 10;
 		this.dir = 0;
 		this._dir;

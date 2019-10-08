@@ -16,6 +16,8 @@ class gameArea{
 		this.myCharacter;
 		this.myCharacterID;
 		this.gameUpdateInterval;
+		this.numberOfUpdates = 0;
+		this.updateTimestamp = 0;
 	}
 
 	set xOffset(value) {
@@ -38,8 +40,7 @@ class gameArea{
 	}
 
 	addInterface() {
-		this.userInterface = new userInterface();
-		this.userInterface.build(this.canvas);
+		this.userInterface = new userInterface(this.canvas, this.myCharacter);
 	}
 
 	addPlayers(players, myCharacterID) {
@@ -75,6 +76,17 @@ class gameArea{
 		this.checkItemsInRange();
 		this.updateUserInterface();
 		this.sendInput();
+		this.numberOfUpdates += 1;
+		if (this.updateTimestamp === 0) {
+			this.updateTimestamp = Date.now();
+		} else {
+			if (Date.now() - this.updateTimestamp > 1000) {
+				this.userInterface.updateFps(this.numberOfUpdates);
+				this.updateTimestamp = 0;
+				this.numberOfUpdates = 0;
+			}
+		}
+		
 	}
 
 	processInput() {
@@ -133,11 +145,7 @@ class gameArea{
 
 	updatePlayers() {
 		for (var playerID in this.players) {
-			if (this.players[playerID].isAlive()) {
-				this.players[playerID].update(this.context);
-			} else {
-				delete this.players[playerID];
-			}
+			this.players[playerID].update(this.context);
 		}
 	}
 
@@ -154,10 +162,6 @@ class gameArea{
 				bullet.update(this.context);
 				for (var playerID in this.players) {
 					if (this.players[playerID].isHit(bullet)) {
-						this.players[playerID].health -= (bullet.dmg);
-						if (playerID == this.myCharacterID) {
-							this.userInterface.updateHPBar(bullet.dmg);
-						}
 						this.bullets.splice(i,1);
 						break;
 					}
@@ -212,7 +216,10 @@ class gameArea{
 				if (typeof clientPlayer === 'undefined') {
 					this.players[playerID] = new player(serverPlayer.x,serverPlayer.y);
 				}
-				//Update certain properties of existing players
+				//Update certain properties of existing player
+				if (playerID === this.myCharacterID) { 
+					this.syncMyCharacter(serverPlayers[playerID]);
+				}
 				this.syncSinglePlayer(this.players[playerID], serverPlayers[playerID]);
 			}
 			//Delete removed players
@@ -220,7 +227,8 @@ class gameArea{
 				if (typeof serverPlayers[playerID] === 'undefined') {
 					if (playerID === this.myCharacterID) {
 						//gameover text
-						delete this.players[playerID]
+						this.userInterface.updateHPBar(0, -this.myCharacter.health, this.myCharacter.maxHealth);
+						delete this.players[playerID];
 					} else {
 						delete this.players[playerID];
 					}
@@ -251,7 +259,25 @@ class gameArea{
 				clientPlayer[attribute] = serverPlayer[attribute];
 			}
 		}
-		clientPlayer.dir = serverPlayer._dir;
+		if (clientPlayer.dir !== serverPlayer.dir) {
+			clientPlayer.dir = serverPlayer._dir;
+		}
+	}
+
+	syncMyCharacter(serverMyCharacter) {
+		for (var attribute in serverMyCharacter) {
+			if (this.myCharacter[attribute] !== serverMyCharacter[attribute] && (attribute === 'x' || attribute === 'y')) {
+				this.myCharacter[attribute] = serverMyCharacter[attribute];
+			}
+			this.userInterface.updateCoords(this.myCharacter.x, this.myCharacter.y);
+		}
+		if (serverMyCharacter.health !== this.myCharacter.health) {
+			this.userInterface.updateHPBar(serverMyCharacter.health, serverMyCharacter.health - this.myCharacter.health, this.myCharacter.maxHealth);
+			this.myCharacter.health = serverMyCharacter.health;
+		}
+		if (this.myCharacter.dir !== serverMyCharacter.dir) {
+			this.myCharacter.dir = serverMyCharacter._dir;
+		}
 	}
 	
 	moveScreenBy (x,y) {
