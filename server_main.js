@@ -427,7 +427,6 @@ io.on('connection', function(socket) {
 	
 	socket.on('player_input', function(input) {
 		//should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
-		//add zoom
 		//on resize change canvas size and center character in, change also zoom
 		//make gameOver sign, clickable start over again, get rid of errors which occur after death
 		//minimap, game boundries
@@ -438,7 +437,11 @@ io.on('connection', function(socket) {
 		//add zombies - make it into a coop?
 		//add fictitious force for each (movable) object
 		//add 0's before x and y to prevent the text moving each time order of magnitude is increased
-		//update rest of the player on server and make client only render
+
+
+
+
+		//WORKING ON: Make welcome screen, html user interface, zoom, update rest of the player on server and make client only render
 		game_board.processInput(socket.id, input);
 	});
 

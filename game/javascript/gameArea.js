@@ -93,15 +93,15 @@ class gameArea{
 			for(var i = 0; i < this.items.length; i++) {	
 				if (this.items[i].inRange(this.myCharacter.x, this.myCharacter.y)) {
 					document.getElementById("pick-item").innerHTML = this.items[i].name;
-					document.getElementById("ui-lower").style.display = "block";
+					document.getElementById("ui-pick-item").style.display = "block";
 					this.inRangeItemIndex = i;
 					break;
 				}
 			}
 			if (this.inRangeItemIndex != -1) {
-				document.getElementById("ui-lower").style.display = "block";
-			} else if (document.getElementById("ui-lower").style.display == "block") {
-				document.getElementById("ui-lower").style.display = "none";
+				document.getElementById("ui-pick-item").style.display = "block";
+			} else if (document.getElementById("ui-pick-item").style.display == "block") {
+				document.getElementById("ui-pick-item").style.display = "none";
 			}
 		}
 	}

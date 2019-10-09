@@ -3,7 +3,7 @@ class userInterface {
         this.latency = {component:new interface_text(5, 20, 'Ping: checking', '20px Arial', 'left', "rgb(0,0,0)"), display:true};
         this.coords = {component:new interface_text(5, 50, 'x: ' + character.x + '   y: ' + character.y, '20px Arial', 'left', "rgb(0,0,0)"), display:true};
         this.fps = {component:new interface_text(5, 80, 'FPS: loading', '20px Arial', 'left', "rgb(0,0,0)"), display:true};
-        this.HPBar = new HPBar(canvas);
+        this.HPBar = new HPBar();
     }
 
     updateLatency (latency) {   
@@ -28,7 +28,6 @@ class userInterface {
         if (this.fps.display) {
             this.fps.component.update(ctx, xOffset, yOffset);
         }
-        this.HPBar.update(ctx, xOffset, yOffset);
     }
 
     updateHPBar (currHP, HPChange, maxHP) {
@@ -42,79 +41,43 @@ class userInterface {
     }
 }
 
+
 class HPBar {
-    constructor (canvas) {
-        this.defaultHPBarWidth = 300;
-        this.defaultHPBarFillColor = 'rgb(180,180,180)';
-        this.HPBar = new rectangle(canvas.width/2 - this.defaultHPBarWidth/2, canvas.height - 100, this.defaultHPBarWidth, 30, this.defaultHPBarFillColor, 1);
-        this.takenHPBar = new rectangle(canvas.width/2 + this.defaultHPBarWidth/2, canvas.height - 100, 0, 30, this.defaultHPBarFillColor, 1);
-        this.HPBarBackground = new rectangle(this.HPBar.xOffset - 6, this.HPBar.yOffset - 6, this.HPBar.width + 12, this.HPBar.height + 12, 'rgba(0,0,0,0.5)');
-        
-        this.lowHP = false;
-        this.red = 250;
-        this.darken = true;        
-    }
-
-    update (ctx, xOffset, yOffset) {
-        if (this.takenHPBar.width > 0) {
-            this.takenHPBar.width -= this.takenHPBar.width/15;
-        }
-
-        if (this.lowHP) {
-            if (this.darken) {
-                if (this.red > 0) {
-                    this.red -= 15;
-                } else {
-                    this.red += 15;
-                    this.darken = false;
-                }
-            } else {
-                if (this.red < 250) {
-                    this.red += 15;
-                } else {
-                    this.darken = true;
-                    this.red -= 15;
-                }
-            }
-            this.HPBar.fillColor = 'rgb(' + this.red + ',0,0)';
-        }
-
-        this.HPBarBackground.update(ctx, xOffset, yOffset);
-        this.HPBar.update(ctx, xOffset, yOffset);
-        this.takenHPBar.update(ctx, xOffset, yOffset);
+    constructor () {
+        this.healthBar = document.getElementById("current-health");
+        this.takenHealthBar = document.getElementById("taken-health");
+        this._lowHP = false;
     }
 
     updateHP (currHP, HPChange, maxHP) {
-        if (currHP !== 0) {
-            var widthChange = HPChange * this.defaultHPBarWidth/maxHP;
-            if (currHP < maxHP) {
-                if (currHP/maxHP > 0.75) {
-                    this.HPBar.fillColor = 'rgb(255,255,255)';
-                    if (this.lowHP) {
-                        this.lowHP = false;
-                    }
-                } else if (currHP/maxHP > 0.2) {
-                    var greenBlue = 100 * currHP/maxHP;
-                    this.HPBar.fillColor = 'rgb(255,' + greenBlue + ',' + greenBlue + ')';
-                    if (this.lowHP) {
-                        this.lowHP = false;
-                    }
-                } else {
-                    this.lowHP = true;
-                }
+        if (HPChange < 0) {
+            if (currHP/maxHP > 0.75) {
+                this.healthBar.style.backgroundColor = 'rgb(255,255,255)';
+                this.lowHP = false;
+            } else if (currHP/maxHP > 0.2) {
+                var greenBlue = 150 * currHP/maxHP;
+                this.healthBar.style.backgroundColor = 'rgb(255,' + greenBlue + ',' + greenBlue + ')';
+                this.lowHP = false;
             } else {
-                this.HPBar.fillColor = this.defaultHPBarFillColor;
-                if (this.lowHP) {
-                    this.lowHP = false;
-                }
+                this.healthBar.style.backgroundColor = 'rgb(255,0,0)';
+                this.lowHP = true;
             }
-
-            this.HPBar.width += widthChange;
-            this.takenHPBar.width -= widthChange;
-            this.takenHPBar.xOffset += widthChange;
+            this.healthBar.style.width = currHP/maxHP * 100 + '%';
+            this.takenHealthBar.style.width = currHP/maxHP * 100 + '%';
+            this.takenHealth = -HPChange;
         } else {
-            this.HPBar.width = 0;
-            this.takenHPBar.width = 0;
+            this.healthBar.style.width = currHP/maxHP * 100 + '%';
         }
+    }
+
+    set lowHP(value) {
+        if (value !== this.lowHP) {
+            this.healthBar.classList.toggle("red-black-pulse-animation");
+            this._lowHP = value;
+        } 
+    }
+
+    get lowHP() {
+        return this._lowHP;
     }
 }

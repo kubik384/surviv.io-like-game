@@ -11,7 +11,7 @@ canvas {
 	display: block;
 }
 
-#ui-lower {
+#ui-pick-item {
 	display: none;
 	color: white;
 	user-select: none;
@@ -19,6 +19,51 @@ canvas {
 	top: 60%;
 	left: 50%;
 	font-size: 30px;
+}
+
+#ui-health-bar {
+	background: rgba(0, 0, 0, 0.4);
+	position: absolute;
+	bottom: 60px;
+	left: 50%;
+	width: 350px;
+	height: 30px;
+	transform: translateX(-50%);
+	padding: 6px;
+}
+
+#health-bar-container {
+	position:relative;
+	height: 100%;
+	width: 100%
+}
+
+#current-health {
+	z-index: 1;
+	position:absolute;
+	height: 100%;
+}
+
+#taken-health {
+	z-index: 0;
+	position:absolute;
+	background: rgb(199,199,199);
+	height: 100%;
+	transition: width 2s;
+	transition-timing-function: cubic-bezier(32,41,67,97);
+}
+
+.red-black-pulse-animation {
+	animation-name: red-black-pulse;
+	animation-duration: 0.5s;
+	animation-timing-function: ease-out;
+	animation-direction: alternate;
+	animation-iteration-count: infinite;
+}
+
+@keyframes red-black-pulse {
+	from {background-color: red;}
+	to {background-color: black;}
 }
 
 #pick-key {
