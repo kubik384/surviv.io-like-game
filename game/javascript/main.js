@@ -33,7 +33,7 @@ function addEventHandlers() {
 	window.addEventListener('keydown', function(e) {
 		if (e.code === 'F3') {
 			e.preventDefault();
-			selectedCanvas.userInterface.toggleDebugOverlay();
+			selectedCanvas.userInterface.debugOverlay.toggle();
 		}
 		selectedCanvas.keyDown(e);
 	});
@@ -63,6 +63,6 @@ function addServerEventHandlers() {
 	});
 
 	socket.on('pong', function(ms) {
-		selectedCanvas.userInterface.updateLatency(ms);
+		selectedCanvas.userInterface.debugOverlay.updateLatency(ms);
 	});
 }

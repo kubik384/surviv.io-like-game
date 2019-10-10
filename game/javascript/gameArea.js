@@ -39,7 +39,7 @@ class gameArea{
 	}
 
 	addInterface() {
-		this.userInterface = new userInterface(this.canvas, this.myCharacter);
+		this.userInterface = new userInterface();
 	}
 
 	addPlayers(players, myCharacterID) {
@@ -72,14 +72,13 @@ class gameArea{
 		this.updateBullets();
 		this.updatePlayers();
 		this.checkItemsInRange();
-		this.updateUserInterface();
 		this.sendInput();
 		this.numberOfUpdates++;
 		if (this.updateTimestamp === 0) {
 			this.updateTimestamp = Date.now();
 		} else {
 			if (Date.now() - this.updateTimestamp >= 1000) {
-				this.userInterface.updateFps(this.numberOfUpdates);
+				this.userInterface.debugOverlay.updateFps(this.numberOfUpdates);
 				this.updateTimestamp = 0;
 				this.numberOfUpdates = 0;
 			}
@@ -135,10 +134,6 @@ class gameArea{
 		}
 	}
 
-	updateUserInterface() {
-		this.userInterface.update(this.context, this.xOffset, this.yOffset);
-	}
-
 	sendInput () {
 		socket.emit('player_input', this.input);
 	}
@@ -190,7 +185,7 @@ class gameArea{
 				if (typeof serverPlayers[playerID] === 'undefined') {
 					if (playerID === this.myCharacterID) {
 						//gameover text
-						this.userInterface.updateHPBar(0, -this.myCharacter.health, this.myCharacter.maxHealth);
+						this.userInterface.HPBar.update(0, -this.myCharacter.health, this.myCharacter.maxHealth);
 						delete this.players[playerID];
 					} else {
 						delete this.players[playerID];
@@ -232,10 +227,10 @@ class gameArea{
 			if (this.myCharacter[attribute] !== serverMyCharacter[attribute] && (attribute === 'x' || attribute === 'y')) {
 				this.myCharacter[attribute] = serverMyCharacter[attribute];
 			}
-			this.userInterface.updateCoords(this.myCharacter.x, this.myCharacter.y);
+			this.userInterface.debugOverlay.updateCoords(this.myCharacter.x, this.myCharacter.y);
 		}
 		if (serverMyCharacter.health !== this.myCharacter.health) {
-			this.userInterface.updateHPBar(serverMyCharacter.health, serverMyCharacter.health - this.myCharacter.health, this.myCharacter.maxHealth);
+			this.userInterface.HPBar.update(serverMyCharacter.health, serverMyCharacter.health - this.myCharacter.health, this.myCharacter.maxHealth);
 			this.myCharacter.health = serverMyCharacter.health;
 		}
 		if (this.myCharacter.dir !== serverMyCharacter.dir) {

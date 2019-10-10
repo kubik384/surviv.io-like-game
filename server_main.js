@@ -328,7 +328,7 @@ class game_area {
 			this.updateTimestamp = Date.now();
 		} else {
 			if (Date.now() - this.updateTimestamp >= 1000) {
-				console.log('Current FPS: ' + this.numberOfUpdates);
+				//console.log('Current FPS: ' + this.numberOfUpdates);
 				this.updateTimestamp = 0;
 				this.numberOfUpdates = 0;
 			}
@@ -437,11 +437,12 @@ io.on('connection', function(socket) {
 		//add zombies - make it into a coop?
 		//add fictitious force for each (movable) object
 		//add 0's before x and y to prevent the text moving each time order of magnitude is increased
+		//remake images into vector graphics
 
 
 
 
-		//WORKING ON: Make welcome screen, html user interface, zoom, update rest of the player on server and make client only render
+		//WORKING ON: zoom, update rest of the player on server and make client only render, make welcome screen
 		game_board.processInput(socket.id, input);
 	});
 

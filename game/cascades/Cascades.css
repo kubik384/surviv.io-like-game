@@ -4,11 +4,23 @@
 }
 
 body {
-	background-color: rgb(92, 145, 10);
+	background-color: rgb(128, 175, 73);
 }
 
 canvas {
 	display: block;
+}
+
+.debug-overlay-component {
+	padding-bottom: 2px;
+}
+
+#ui-debug-overlay {
+	user-select: none;
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	font-size: 24px;
 }
 
 #ui-pick-item {
@@ -24,6 +36,7 @@ canvas {
 #ui-health-bar {
 	background: rgba(0, 0, 0, 0.4);
 	position: absolute;
+	border-radius: 5px;
 	bottom: 60px;
 	left: 50%;
 	width: 350px;
@@ -94,11 +107,40 @@ canvas {
 	font-size: 22px;
 }
 
+.weapon-slot {
+	margin-bottom: 30px;
+	height: 68px;
+	border-radius: 5px;
+}
+
+.weapon-image {
+	width: 80px;
+	vertical-align: bottom;
+}
+
+.weapon-slot-number {
+	display: inline-block;
+	font-size: 56px;
+	vertical-align: top;
+	padding-right: 50px;
+	padding-left: 5px;
+}
+
+.weapon-image-name-container {
+	display: inline-block;
+	padding-right: 10px;
+}
+
+.selected-weapon-slot {
+	background-color: rgba(0, 0, 0, 0.4);
+}
+
 #ui-weapon {
 	position: absolute;
 	right: 10px;
-	top: 0;
-	color: white;
+	bottom: 35px;
 	user-select: none;
-	font-size: 30px;
+	font-size: 28px;
+	color: white;
+	font-weight: bold;
 }

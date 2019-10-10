@@ -22,7 +22,41 @@
 	<script src="/game/javascript/gameArea.js"></script>
 </head>
 <body onload="request_data();">
-	<div id="ui-weapon">Hand</div>
+	<div id="ui-debug-overlay">
+		<div class="debug-overlay-component" id="latency" style = "display:none">Ping: Checking</div>
+		<div class="debug-overlay-component" id="coordinates" style = "display:none">X: 0, Y: 0</div>
+		<div class="debug-overlay-component" id="fps" style = "display:none">FPS: Counting</div>
+	</div>
+	<div id="ui-weapon">
+		<div class="weapon-slot selected-weapon-slot" id="weapon-slot-1">
+			<div class="weapon-slot-number">1</div>
+			<div class="weapon-image-name-container">
+				<img class="weapon-image" src="/game/images/weapons/ak47.png"></img>
+				<div class="weapon-name">AK-47</div>
+			</div>
+		</div>
+		<div class="weapon-slot" id="weapon-slot-2">
+			<div class="weapon-slot-number">2</div>
+			<div class="weapon-image-name-container">
+				<!-- <img class="weapon-image" src="/game/images/weapons/ak47.png"></img>
+				<div class="weapon-name">AK-47</div> -->
+			</div>
+		</div>
+		<div class="weapon-slot" id="weapon-slot-3">
+			<div class="weapon-slot-number">3</div>
+			<div class="weapon-image-name-container">
+				<!-- <img class="weapon-image" src="/game/images/weapons/ak47.png"></img>
+				<div class="weapon-name">AK-47</div> -->
+			</div>
+		</div>
+		<div class="weapon-slot" id="weapon-slot-4">
+			<div class="weapon-slot-number">4</div>
+			<div class="weapon-image-name-container">
+				<!-- <img class="weapon-image" src="/game/images/weapons/ak47.png"></img>
+				<div class="weapon-name">AK-47</div> -->
+			</div>
+		</div>
+	</div>
 	<div id="ui-pick-item">
 		<div id="pick-key">F</div>
 		<div id="pick-item">Item</div>
