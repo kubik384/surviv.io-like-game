@@ -6,6 +6,8 @@ class gameArea{
 		this.context = this.canvas.getContext("2d");
 		this._xOffset = 0;
 		this._yOffset = 0;
+		this.zoomXOffsetAdjustment = 0;
+		this.zoomYOffsetAdjustment = 0;
 		this.inRangeItemIndex = -1;
 		this.pickItem = false;
 		this.input = {};
@@ -17,6 +19,7 @@ class gameArea{
 		this.myCharacterID;
 		this.numberOfUpdates = 0;
 		this.updateTimestamp = 0;
+		this.zoom = 1;
 	}
 
 	set xOffset(value) {
@@ -67,7 +70,7 @@ class gameArea{
 	}
 
 	update () {
-		gameArea.clear(this.context,this.xOffset,this.yOffset,this.canvas.width,this.canvas.height);
+		gameArea.clear(this.context,this.xOffset,this.yOffset,this.canvas.width,this.canvas.height,this.zoom);
 		this.updateItems();
 		this.updateBullets();
 		this.updatePlayers();
@@ -237,18 +240,27 @@ class gameArea{
 			this.myCharacter.dir = serverMyCharacter._dir;
 		}
 	}
-	
-	moveScreenBy (x,y) {
-		this.xOffset += x;
-		this.yOffset += y;
+
+	zoomIn() {
+		this.zoom *= 1.25;
+		this.zoomXOffsetAdjustment += this.myCharacter.x * 0.2;
+		this.zoomYOffsetAdjustment += this.myCharacter.y * 0.2;
+		this.context.scale(1.25, 1.25);
+	}
+
+	zoomOut() {
+		this.zoom *= 0.8;
+		this.zoomXOffsetAdjustment -= this.myCharacter.x * 0.25;
+		this.zoomYOffsetAdjustment -= this.myCharacter.y * 0.25;
+		this.context.scale(0.8, 0.8);
 	}
 
 	centerScreenOnPlayer () {
-		this.xOffset = this.myCharacter.x - this.canvas.width/2;
-		this.yOffset = this.myCharacter.y - this.canvas.height/2;
+		this.xOffset = this.myCharacter.x + this.zoomXOffsetAdjustment - this.canvas.width/2;
+		this.yOffset = this.myCharacter.y + this.zoomYOffsetAdjustment - this.canvas.height/2;
 	}
 
-	static clear (ctx,xOffset,yOffset,canvasWidth,canvasHeight) {
-		ctx.clearRect(xOffset, yOffset, canvasWidth, canvasHeight);
+	static clear (ctx,xOffset,yOffset,canvasWidth,canvasHeight,zoom) {
+		ctx.clearRect(xOffset - (canvasWidth / zoom - canvasWidth)/2, yOffset - (canvasHeight / zoom - canvasHeight)/2, canvasWidth / zoom, canvasHeight / zoom);
 	}
 }

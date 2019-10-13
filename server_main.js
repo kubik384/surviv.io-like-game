@@ -426,23 +426,30 @@ io.on('connection', function(socket) {
 	}); 
 	
 	socket.on('player_input', function(input) {
-		//should unify weapon classes for example (in case I change in server_main file for example with the weapon size, so that it projects also into clients code), same for bullets, default character movement speeds, constructor settings etc.
-		//on resize change canvas size and center character in, change also zoom
-		//make gameOver sign, clickable start over again, get rid of errors which occur after death
-		//minimap, game boundries
-		//add sounds + fulscreen button
-		//implement "f to take" into user interface
-		//replace dead player with some image indicating place of death
-		//remake components so I can also only stroke and not fill. Also, add rounded corners to rectangle
-		//add zombies - make it into a coop?
-		//add fictitious force for each (movable) object
-		//add 0's before x and y to prevent the text moving each time order of magnitude is increased
-		//remake images into vector graphics
-
-
-
-
-		//WORKING ON: zoom, update rest of the player on server and make client only render, make welcome screen
+		/*
+		|  ----------------------------------- Working on (in this order) -----------------------------------|
+		|	zoom																							 |
+		|	update rest of the player on server and make client only render                                  |
+		|	make it possible to pick items/weapons and update ui accordingly                                 |
+		|	replace dead player with some image indicating place of death                                    |
+		|	make gameOver sign, clickable start over again, get rid of errors which occur after death        |
+		|	make welcome screen                                                                              |
+		|	on resize change canvas size and center character in, change also zoom                           |
+		|	minimap, game boundries                                                                          |
+		|	add sounds                                                                                       |
+		|----------------------------------------------------------------------------------------------------|
+		|--------------------------------------- Secondary objectives ---------------------------------------|
+		|	remake (weapon) images into vector graphics?                                                     |
+		|	add 0's before x and y to prevent the text moving each time order of magnitude is increased      |
+		|	add fictitious force for each (movable) object                                                   |
+		|	should unify weapon classes for example (in case I change in server_main file,                   |
+		|	for example with the weapon size, so that it projects also into clients code), same for bullets, |
+		|	default character movement speeds, constructor settings etc.                                     |
+		|	fulscreen button	                                                                             |
+		|   disable rendering outside drawing screen, add no rendered objects in debugOverlay                |
+		|   optimize performance (clear only objects that change etc.)                                       |
+		|----------------------------------------------------------------------------------------------------|
+		*/
 		game_board.processInput(socket.id, input);
 	});
 

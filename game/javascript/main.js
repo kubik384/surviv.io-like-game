@@ -34,6 +34,11 @@ function addEventHandlers() {
 		if (e.code === 'F3') {
 			e.preventDefault();
 			selectedCanvas.userInterface.debugOverlay.toggle();
+		} else if (e.code === 'NumpadAdd') {
+			selectedCanvas.zoomIn();
+
+		} else if (e.code === 'NumpadSubtract' ) {
+			selectedCanvas.zoomOut();
 		}
 		selectedCanvas.keyDown(e);
 	});
