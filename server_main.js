@@ -445,7 +445,7 @@ io.on('connection', function(socket) {
 		|	should unify weapon classes for example (in case I change in server_main file,                   |
 		|	for example with the weapon size, so that it projects also into clients code), same for bullets, |
 		|	default character movement speeds, constructor settings etc.                                     |
-		|	fulscreen button	                                                                             |
+		|	fullscreen button	                                                                             |
 		|   disable rendering outside drawing screen, add no rendered objects in debugOverlay                |
 		|   optimize performance (clear only objects that change etc.)                                       |
 		|----------------------------------------------------------------------------------------------------|

@@ -70,7 +70,7 @@ class gameArea{
 	}
 
 	update () {
-		gameArea.clear(this.context,this.xOffset,this.yOffset,this.canvas.width,this.canvas.height,this.zoom);
+		gameArea.clear(this.context,this.xOffset,this.yOffset,this.canvas.width,this.canvas.height, this.zoom);
 		this.updateItems();
 		this.updateBullets();
 		this.updatePlayers();
@@ -156,7 +156,7 @@ class gameArea{
 	}
 
 	mouseMove (e) {
-		this.myCharacter.dir = angleFromVec({x:this.myCharacter.x + this.myCharacter.body.xOffset, y:this.myCharacter.y + this.myCharacter.body.yOffset}, {x:this.xOffset + e.pageX, y:this.yOffset + e.pageY});
+		this.myCharacter.dir = angleFromVec({x:this.myCharacter.x + this.myCharacter.body.xOffset, y:this.myCharacter.y + this.myCharacter.body.yOffset}, {x:this.xOffset - this.zoomXOffsetAdjustment + e.pageX, y:this.yOffset - this.zoomYOffsetAdjustment + e.pageY});
 		this.myCharacter.dir -= (this.myCharacter.dir !== -180 ? -180 : 0);
 		this.input['Dir'] = this.myCharacter.dir;
 	}
@@ -255,6 +255,7 @@ class gameArea{
 		this.context.scale(0.8, 0.8);
 	}
 
+	//Remake the /2 to /zoom
 	centerScreenOnPlayer () {
 		this.xOffset = this.myCharacter.x + this.zoomXOffsetAdjustment - this.canvas.width/2;
 		this.yOffset = this.myCharacter.y + this.zoomYOffsetAdjustment - this.canvas.height/2;
