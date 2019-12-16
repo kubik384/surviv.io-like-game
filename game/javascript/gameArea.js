@@ -94,16 +94,16 @@ class gameArea{
 			this.inRangeItemIndex = -1;
 			for(var i = 0; i < this.items.length; i++) {	
 				if (this.items[i].inRange(this.myCharacter.x, this.myCharacter.y)) {
-					document.getElementById("pick-item").innerHTML = this.items[i].name;
-					document.getElementById("ui-pick-item").style.display = "block";
 					this.inRangeItemIndex = i;
 					break;
 				}
 			}
 			if (this.inRangeItemIndex != -1) {
-				document.getElementById("ui-pick-item").style.display = "block";
-			} else if (document.getElementById("ui-pick-item").style.display == "block") {
-				document.getElementById("ui-pick-item").style.display = "none";
+				if (this.userInterface.pickItemShown) {
+					this.userInterface.showPickItem();
+				}
+			} else if (this.userInterface.pickItemShown) {
+				this.userInterface.hidePickItem();
 			}
 		}
 	}
@@ -255,7 +255,6 @@ class gameArea{
 		this.context.scale(0.8, 0.8);
 	}
 
-	//Remake the /2 to /zoom
 	centerScreenOnPlayer () {
 		this.xOffset = this.myCharacter.x + this.zoomXOffsetAdjustment - this.canvas.width/2;
 		this.yOffset = this.myCharacter.y + this.zoomYOffsetAdjustment - this.canvas.height/2;

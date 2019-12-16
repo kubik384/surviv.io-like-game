@@ -3,6 +3,16 @@ class userInterface {
         this.HPBar = new HPBar();
         this.debugOverlay = new debugOverlay();
     }
+    
+    showPickItem() {
+        document.getElementById("pick-item").innerHTML = this.items[i].name;
+        document.getElementById("ui-pick-item").style.display = "block";
+    }
+
+    hidePickItem() {
+        document.getElementById("pick-item").innerHTML = this.items[i].name;
+        document.getElementById("ui-pick-item").style.display = "none";
+    }
 }
 
 

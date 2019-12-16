@@ -428,7 +428,6 @@ io.on('connection', function(socket) {
 	socket.on('player_input', function(input) {
 		/*
 		|  ----------------------------------- Working on (in this order) -----------------------------------|
-		|	zoom																							 |
 		|	update rest of the player on server and make client only render                                  |
 		|	make it possible to pick items/weapons and update ui accordingly                                 |
 		|	replace dead player with some image indicating place of death                                    |
@@ -448,6 +447,7 @@ io.on('connection', function(socket) {
 		|	fullscreen button	                                                                             |
 		|   disable rendering outside drawing screen, add no rendered objects in debugOverlay                |
 		|   optimize performance (clear only objects that change etc.)                                       |
+		|	zoom code is absolutely terrible, also zoom in still buggs out                                   |
 		|----------------------------------------------------------------------------------------------------|
 		*/
 		game_board.processInput(socket.id, input);
